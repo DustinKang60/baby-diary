@@ -470,6 +470,40 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ── ANALYSIS FEEDBACK ── */
+  .feedback-card {
+    margin: 8px 16px 0;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--card-shadow);
+    animation: fadeInUp 0.4s ease;
+  }
+  .feedback-card.good { background: linear-gradient(135deg, #F0FBF6, #D8F5E9); border-left: 4px solid #3DBE8A; }
+  .feedback-card.warn { background: linear-gradient(135deg, #FFFBEC, #FFF3CC); border-left: 4px solid #FFD93D; }
+  .feedback-card.info { background: linear-gradient(135deg, #EBF5FF, #D6EEFF); border-left: 4px solid var(--blue); }
+  .feedback-title { font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+  .feedback-card.good .feedback-title { color: #2A8055; }
+  .feedback-card.warn .feedback-title { color: #B8860B; }
+  .feedback-card.info .feedback-title { color: #2060A0; }
+  .feedback-rows { display: flex; flex-direction: column; gap: 5px; }
+  .feedback-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .feedback-row .fb-label { color: var(--text-mid); min-width: 60px; }
+  .feedback-row .fb-value { font-weight: 700; }
+  .feedback-row .fb-status { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; }
+  .fb-status.ok { background: var(--mint-light); color: #2A8055; }
+  .fb-status.low { background: #FFF3CC; color: #B8860B; }
+  .fb-status.high { background: #FFE0E0; color: #CC3333; }
+  .insight-box {
+    margin: 8px 16px 0;
+    background: linear-gradient(135deg, var(--pink-pale), var(--purple-pale));
+    border-radius: var(--radius); padding: 14px 18px;
+    box-shadow: var(--card-shadow);
+  }
+  .insight-box .insight-title { font-size: 13px; font-weight: 800; color: var(--pink); margin-bottom: 8px; }
+  .insight-item { font-size: 13px; color: var(--text-mid); padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .insight-item:last-child { border-bottom: none; }
+  .insight-item strong { color: var(--text-dark); }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -613,6 +647,9 @@
         <div class="s-label">💧 기저귀</div>
       </div>
     </div>
+
+    <!-- ANALYSIS FEEDBACK -->
+    <div id="feedback-section"></div>
 
     <div class="section-title" style="margin-top:8px;">빠른 기록</div>
     <div class="quick-grid">
@@ -1116,6 +1153,7 @@ function loadRecords() {
     loadFromLocal();
     renderTimeline();
     updateSummary();
+    renderFeedback();
   }
 }
 
@@ -1141,6 +1179,7 @@ async function loadFromFirestore() {
     renderTimeline();
     updateSummary();
     updateLastFeed();
+    renderFeedback();
     renderStats();
     renderSharedFeed();
   });
@@ -1167,6 +1206,7 @@ window.saveRecord = async (type) => {
     renderTimeline();
     updateSummary();
     updateLastFeed();
+    renderFeedback();
   }
 };
 
@@ -1634,7 +1674,149 @@ const joinUid = urlParams.get('join');
 if (joinUid) localStorage.setItem('sharedBabyUid', joinUid);
 
 // setInterval for last feed update
-setInterval(() => { if (records.length) updateLastFeed(); }, 60000);
+setInterval(() => { if (records.length) { updateLastFeed(); renderFeedback(); } }, 60000);
+function getAgeMonths() {
+  if (!babyInfo) return 0;
+  const birth = new Date(babyInfo.birth);
+  const now = new Date();
+  // 수정연령 적용
+  if (babyInfo.preterm && babyInfo.dueDate) {
+    const due = new Date(babyInfo.dueDate);
+    return Math.max(0, Math.floor((now - due) / (30*24*60*60*1000)));
+  }
+  return Math.floor((now - birth) / (30*24*60*60*1000));
+}
+
+// 월령별 정상 범위 기준 (WHO + 소아과 가이드라인)
+const NORMS = {
+  feed: [
+    { max: 1,  min: 8,  maxN: 12, label: '신생아' },
+    { max: 2,  min: 7,  maxN: 10, label: '1~2개월' },
+    { max: 3,  min: 6,  maxN: 8,  label: '2~3개월' },
+    { max: 4,  min: 5,  maxN: 8,  label: '3~4개월' },
+    { max: 6,  min: 5,  maxN: 7,  label: '4~6개월' },
+    { max: 9,  min: 4,  maxN: 6,  label: '6~9개월' },
+    { max: 12, min: 3,  maxN: 5,  label: '9~12개월' },
+    { max: 24, min: 3,  maxN: 5,  label: '12개월 이상' },
+  ],
+  sleep: [ // 총 수면 시간(시간)
+    { max: 1,  min: 14, maxN: 17, label: '신생아' },
+    { max: 3,  min: 14, maxN: 17, label: '1~3개월' },
+    { max: 6,  min: 12, maxN: 16, label: '3~6개월' },
+    { max: 9,  min: 12, maxN: 15, label: '6~9개월' },
+    { max: 12, min: 11, maxN: 14, label: '9~12개월' },
+    { max: 24, min: 11, maxN: 14, label: '12개월 이상' },
+  ],
+  diaper: [ // 기저귀 소변 횟수
+    { max: 2,  min: 6,  maxN: 12, label: '신생아' },
+    { max: 6,  min: 6,  maxN: 10, label: '~6개월' },
+    { max: 24, min: 4,  maxN: 8,  label: '6개월 이상' },
+  ]
+};
+
+function getNorm(type, ageMonths) {
+  const list = NORMS[type];
+  for (const n of list) {
+    if (ageMonths < n.max) return n;
+  }
+  return list[list.length - 1];
+}
+
+function renderFeedback() {
+  const el = document.getElementById('feedback-section');
+  if (!el || !babyInfo) return;
+  const ageMonths = getAgeMonths();
+  const today = new Date().toDateString();
+  const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
+  
+  const feedCount = todayRecs.filter(r => r.type === 'feed').length;
+  const sleepMins = todayRecs.filter(r => r.type === 'sleep' && r.duration).reduce((s,r) => s+r.duration, 0);
+  const sleepHours = +(sleepMins / 60).toFixed(1);
+  const diaperCount = todayRecs.filter(r => r.type === 'diaper').length;
+  const pooCount = todayRecs.filter(r => r.type === 'diaper' && (r.diaperType||'').includes('대변')).length;
+  const tempRecs = todayRecs.filter(r => r.type === 'temp');
+  const lastTemp = tempRecs.length ? tempRecs[tempRecs.length-1].value : null;
+
+  const feedNorm = getNorm('feed', ageMonths);
+  const sleepNorm = getNorm('sleep', ageMonths);
+  const diaperNorm = getNorm('diaper', ageMonths);
+
+  const getStatus = (val, min, max) => {
+    if (val < min) return { cls: 'low', text: '부족' };
+    if (val > max) return { cls: 'high', text: '많음' };
+    return { cls: 'ok', text: '정상 ✓' };
+  };
+
+  const feedStatus = getStatus(feedCount, feedNorm.min, feedNorm.maxN);
+  const sleepStatus = getStatus(sleepHours, sleepNorm.min, sleepNorm.maxN);
+  const diaperStatus = getStatus(diaperCount, diaperNorm.min, diaperNorm.maxN);
+
+  // 인사이트 메시지 생성
+  const insights = [];
+  if (feedCount > 0 && feedStatus.cls !== 'ok') {
+    if (feedStatus.cls === 'low') insights.push(`🍼 수유 횟수가 조금 <strong>적어요</strong>. ${ageMonths}개월 기준 하루 ${feedNorm.min}~${feedNorm.maxN}회가 권장돼요.`);
+    else insights.push(`🍼 수유가 <strong>많은 편</strong>이에요. 수유 간격을 조금 늘려보세요.`);
+  }
+  if (sleepHours > 0 && sleepStatus.cls !== 'ok') {
+    if (sleepStatus.cls === 'low') insights.push(`😴 수면이 <strong>부족해요</strong>. ${ageMonths}개월 기준 하루 ${sleepNorm.min}~${sleepNorm.maxN}시간이 필요해요.`);
+    else insights.push(`😴 오늘 수면이 <strong>아주 많네요</strong>. 컨디션이 좋지 않은지 확인해보세요.`);
+  }
+  if (lastTemp !== null) {
+    if (lastTemp >= 38.0) insights.push(`🌡️ 체온이 <strong>${lastTemp}°C</strong>로 발열 기준(38°C)이에요. 소아과 방문을 고려해보세요.`);
+    else if (lastTemp >= 37.5) insights.push(`🌡️ 체온이 <strong>${lastTemp}°C</strong>로 미열이에요. 수분 보충과 관찰이 필요해요.`);
+    else insights.push(`🌡️ 체온 <strong>${lastTemp}°C</strong> 정상이에요 ✓`);
+  }
+  if (pooCount === 0 && ageMonths >= 1 && diaperCount > 0) {
+    insights.push(`💩 오늘 대변 기록이 없어요. 2~3일 이상 없으면 소아과에 문의해보세요.`);
+  }
+  if (feedCount === 0 && sleepHours === 0 && diaperCount === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="feedback-card ${feedStatus.cls === 'ok' && sleepStatus.cls === 'ok' && diaperStatus.cls === 'ok' ? 'good' : 'warn'}">
+      <div class="feedback-title">📋 오늘 ${ageMonths}개월 기준 분석</div>
+      <div class="feedback-rows">
+        <div class="feedback-row">
+          <span class="fb-label">🍼 수유</span>
+          <span class="fb-value">${feedCount}회</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${feedNorm.min}~${feedNorm.maxN}회</span>
+          <span class="fb-status ${feedStatus.cls}">${feedStatus.text}</span>
+        </div>
+        <div class="feedback-row">
+          <span class="fb-label">😴 수면</span>
+          <span class="fb-value">${sleepHours}시간</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${sleepNorm.min}~${sleepNorm.maxN}h</span>
+          <span class="fb-status ${sleepStatus.cls}">${sleepStatus.text}</span>
+        </div>
+        <div class="feedback-row">
+          <span class="fb-label">💧 기저귀</span>
+          <span class="fb-value">${diaperCount}회</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${diaperNorm.min}~${diaperNorm.maxN}회</span>
+          <span class="fb-status ${diaperStatus.cls}">${diaperStatus.text}</span>
+        </div>
+        ${lastTemp ? `
+        <div class="feedback-row">
+          <span class="fb-label">🌡️ 체온</span>
+          <span class="fb-value">${lastTemp}°C</span>
+          <span style="font-size:11px;color:var(--text-light);">정상 36.5~37.5°C</span>
+          <span class="fb-status ${lastTemp >= 38 ? 'high' : lastTemp >= 37.5 ? 'low' : 'ok'}">${lastTemp >= 38 ? '발열!' : lastTemp >= 37.5 ? '미열' : '정상 ✓'}</span>
+        </div>` : ''}
+      </div>
+    </div>
+    ${insights.length > 0 ? `
+    <div class="insight-box">
+      <div class="insight-title">💡 오늘의 육아 인사이트</div>
+      ${insights.map(i => `<div class="insight-item">${i}</div>`).join('')}
+    </div>` : `
+    <div class="insight-box">
+      <div class="insight-title">💡 오늘의 육아 인사이트</div>
+      <div class="insight-item">✨ 오늘 모든 기록이 <strong>${ageMonths}개월 기준 정상 범위</strong>예요! 잘 하고 계세요 👏</div>
+    </div>`}
+  `;
+}
+
 
 </script>
 </body>
