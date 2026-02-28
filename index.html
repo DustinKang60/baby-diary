@@ -504,6 +504,91 @@
   .insight-item:last-child { border-bottom: none; }
   .insight-item strong { color: var(--text-dark); }
 
+  /* ── FOOD PAGE ── */
+  .food-container { padding: 0 16px 20px; }
+  .food-card {
+    background: white; border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--card-shadow); margin-bottom: 16px;
+  }
+  .food-card h3 { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+  .food-search-wrap { position: relative; margin-bottom: 14px; }
+  .food-search-wrap input {
+    width: 100%; padding: 12px 16px 12px 42px; border: 2px solid var(--pink-light);
+    border-radius: var(--radius-sm); font-size: 15px; font-family: inherit; outline: none;
+    background: white; transition: border-color 0.2s;
+  }
+  .food-search-wrap input:focus { border-color: var(--pink); }
+  .food-search-wrap .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+  .food-search-results {
+    background: white; border: 2px solid var(--pink-light); border-radius: var(--radius-sm);
+    max-height: 200px; overflow-y: auto; display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .food-search-results.show { display: block; }
+  .food-result-item {
+    padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f5f5f5;
+    display: flex; align-items: center; gap: 10px; font-size: 14px;
+    transition: background 0.15s;
+  }
+  .food-result-item:hover { background: var(--pink-pale); }
+  .food-result-item .f-emoji { font-size: 20px; }
+  .food-result-item .f-name { font-weight: 600; }
+  .food-result-item .f-cat { font-size: 11px; color: var(--text-light); }
+  .category-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cat-pill {
+    padding: 6px 14px; border: 2px solid #eee; border-radius: 20px;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    background: white; color: var(--text-mid);
+  }
+  .cat-pill.active { border-color: var(--pink); background: var(--pink-pale); color: var(--pink); }
+  .food-log-form { display: flex; flex-direction: column; gap: 12px; }
+  .food-reaction-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .reaction-pill {
+    padding: 8px 14px; border: 2px solid #eee; border-radius: 20px;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    background: white;
+  }
+  .reaction-pill.active.good { border-color: #3DBE8A; background: var(--mint-pale); color: #2A8055; }
+  .reaction-pill.active.warn { border-color: #FFD93D; background: var(--yellow-pale); color: #B8860B; }
+  .reaction-pill.active.bad { border-color: #FF6B6B; background: #FFF0F0; color: #CC3333; }
+  .reaction-pill.active.reject { border-color: var(--text-light); background: #f5f5f5; color: var(--text-mid); }
+  .btn-add-food {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, #FFB347, #FF8FAB);
+    border: none; border-radius: var(--radius-sm); color: white; font-size: 15px;
+    font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; margin-top: 4px;
+  }
+  .food-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid var(--pink-light); }
+  .food-tab {
+    flex: 1; padding: 10px; border: none; background: white; font-size: 12px;
+    font-weight: 700; cursor: pointer; transition: all 0.2s; color: var(--text-mid);
+    font-family: inherit;
+  }
+  .food-tab.active { background: var(--pink); color: white; }
+  .food-item-list { display: flex; flex-direction: column; gap: 10px; }
+  .food-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    background: var(--bg); border-radius: var(--radius-sm);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .food-item .fi-emoji { font-size: 24px; flex-shrink: 0; }
+  .food-item .fi-info { flex: 1; }
+  .food-item .fi-name { font-size: 14px; font-weight: 700; }
+  .food-item .fi-detail { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+  .food-item .fi-date { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .food-item .fi-badge {
+    font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; flex-shrink: 0;
+  }
+  .fi-badge.good { background: var(--mint-light); color: #2A8055; }
+  .fi-badge.warn { background: var(--yellow-pale); color: #B8860B; }
+  .fi-badge.bad { background: #FFE0E0; color: #CC3333; }
+  .fi-badge.reject { background: #f0f0f0; color: var(--text-mid); }
+  .fi-badge.todo { background: var(--blue-pale); color: #2060A0; }
+  .food-del-btn {
+    background: none; border: none; cursor: pointer; font-size: 14px;
+    color: var(--text-light); padding: 4px; border-radius: 8px; flex-shrink: 0;
+  }
+  .empty-food { text-align: center; padding: 30px 20px; color: var(--text-light); font-size: 14px; }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -792,6 +877,122 @@
     </div>
   </div>
 
+  <!-- FOOD PAGE -->
+  <div class="page" id="page-food">
+    <div class="app-header" style="padding-bottom:20px;">
+      <h1 style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:white;">🥣 이유식 기록</h1>
+      <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">먹은 음식, 반응, 계획을 관리해요</p>
+    </div>
+    <div class="food-container" style="margin-top:20px;">
+
+      <!-- 음식 추가 카드 -->
+      <div class="food-card">
+        <h3>🍽️ 음식 기록 추가</h3>
+
+        <!-- 카테고리 필터 -->
+        <div class="category-pills">
+          <button class="cat-pill active" onclick="selectFoodCat(this,'전체')">전체</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'채소')">🥦 채소</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'과일')">🍎 과일</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'곡류')">🌾 곡류</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'단백질')">🥚 단백질</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'유제품')">🥛 유제품</button>
+        </div>
+
+        <!-- 음식 검색 -->
+        <div class="food-search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="food-search-input" placeholder="음식 이름 검색 또는 직접 입력" oninput="searchFood(this.value)" autocomplete="off">
+          <div class="food-search-results" id="food-search-results"></div>
+        </div>
+
+        <div class="food-log-form">
+          <!-- 선택된 음식 -->
+          <div style="padding:12px;background:var(--pink-pale);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--pink);min-height:44px;display:flex;align-items:center;">
+            <span id="selected-food-display">👆 위에서 음식을 검색하거나 직접 입력하세요</span>
+          </div>
+
+          <!-- 날짜 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:6px;">날짜</label>
+            <input type="date" id="food-date" style="width:100%;padding:12px 14px;border:2px solid var(--pink-light);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;outline:none;">
+          </div>
+
+          <!-- 양 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:6px;">먹은 양 (선택)</label>
+            <input type="text" id="food-amount" placeholder="예: 2스푼, 반 공기" style="width:100%;padding:12px 14px;border:2px solid var(--pink-light);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;outline:none;">
+          </div>
+
+          <!-- 반응 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:8px;">아기 반응</label>
+            <div class="food-reaction-pills">
+              <button class="reaction-pill active good" onclick="selectReaction(this,'잘먹음')">😋 잘 먹음</button>
+              <button class="reaction-pill warn" onclick="selectReaction(this,'보통')">😐 보통</button>
+              <button class="reaction-pill bad" onclick="selectReaction(this,'알레르기')">⚠️ 알레르기</button>
+              <button class="reaction-pill reject" onclick="selectReaction(this,'거부')">🙅 거부</button>
+            </div>
+          </div>
+
+          <!-- 상태 (먹었는지 / 예정인지) -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:8px;">상태</label>
+            <div class="food-reaction-pills">
+              <button class="reaction-pill active good" id="status-ate" onclick="selectStatus('ate')">✅ 먹었어요</button>
+              <button class="reaction-pill" id="status-todo" onclick="selectStatus('todo')" style="border-color:#93C6F5;color:#2060A0;">📋 먹일 예정</button>
+            </div>
+          </div>
+
+          <!-- 메모 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:6px;">메모 (선택)</label>
+            <textarea id="food-memo" placeholder="반응 상세, 조리법 등" style="width:100%;padding:12px 14px;border:2px solid var(--pink-light);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none;min-height:70px;resize:none;"></textarea>
+          </div>
+
+          <button class="btn-add-food" onclick="saveFoodRecord()">🥣 저장하기</button>
+        </div>
+      </div>
+
+      <!-- 음식 목록 -->
+      <div class="food-card">
+        <h3>📋 이유식 기록 목록</h3>
+        <div class="food-tabs">
+          <button class="food-tab active" onclick="switchFoodTab(this,'all')">전체</button>
+          <button class="food-tab" onclick="switchFoodTab(this,'ate')">먹은 음식</button>
+          <button class="food-tab" onclick="switchFoodTab(this,'todo')">먹일 예정</button>
+          <button class="food-tab" onclick="switchFoodTab(this,'reject')">거부/알레르기</button>
+        </div>
+        <div class="food-item-list" id="food-item-list">
+          <div class="empty-food">🥣 아직 기록이 없어요<br>위에서 추가해보세요!</div>
+        </div>
+      </div>
+
+      <!-- 통계 요약 -->
+      <div class="food-card">
+        <h3>📊 이유식 현황</h3>
+        <div class="summary-row" style="padding:0;margin:0;">
+          <div class="summary-card pink">
+            <div class="s-num" id="food-ate-count">0</div>
+            <div class="s-unit">가지</div>
+            <div class="s-label">먹은 음식</div>
+          </div>
+          <div class="summary-card blue">
+            <div class="s-num" id="food-todo-count">0</div>
+            <div class="s-unit">가지</div>
+            <div class="s-label">먹일 예정</div>
+          </div>
+          <div class="summary-card" style="background:white;">
+            <div class="s-num" style="color:#CC3333;" id="food-alert-count">0</div>
+            <div class="s-unit">가지</div>
+            <div class="s-label">주의 음식</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <!-- BOTTOM NAV -->
@@ -803,6 +1004,10 @@
   <button class="nav-btn" onclick="switchPage('stats', this)">
     <span class="nav-icon">📊</span>
     <span class="nav-label">통계</span>
+  </button>
+  <button class="nav-btn" onclick="switchPage('food', this)">
+    <span class="nav-icon">🥣</span>
+    <span class="nav-label">이유식</span>
   </button>
   <button class="nav-btn" onclick="switchPage('growth', this)">
     <span class="nav-icon">📏</span>
@@ -1636,6 +1841,7 @@ window.switchPage = (name, btn) => {
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'stats') { renderStats(); }
+  if (name === 'food') { initFoodPage(); }
   if (name === 'growth') { renderGrowthChart(); renderVaccineList(); }
   if (name === 'family') { generateInviteLink(); renderSharedFeed(); }
 };
@@ -1817,6 +2023,294 @@ function renderFeedback() {
   `;
 }
 
+
+// ── FOOD DATABASE ──
+const FOOD_DB = [
+  // 채소
+  { name:'당근', emoji:'🥕', cat:'채소', intro:'4~6개월' },
+  { name:'고구마', emoji:'🍠', cat:'채소', intro:'4~6개월' },
+  { name:'감자', emoji:'🥔', cat:'채소', intro:'4~6개월' },
+  { name:'애호박', emoji:'🥒', cat:'채소', intro:'4~6개월' },
+  { name:'브로콜리', emoji:'🥦', cat:'채소', intro:'5~6개월' },
+  { name:'시금치', emoji:'🌿', cat:'채소', intro:'6개월 이후' },
+  { name:'완두콩', emoji:'🟢', cat:'채소', intro:'6~7개월' },
+  { name:'양파', emoji:'🧅', cat:'채소', intro:'7개월 이후' },
+  { name:'무', emoji:'⬜', cat:'채소', intro:'6개월 이후' },
+  { name:'콜리플라워', emoji:'🥦', cat:'채소', intro:'6개월 이후' },
+  { name:'비트', emoji:'🟣', cat:'채소', intro:'6개월 이후' },
+  { name:'파프리카', emoji:'🫑', cat:'채소', intro:'7개월 이후' },
+  // 과일
+  { name:'사과', emoji:'🍎', cat:'과일', intro:'4~6개월' },
+  { name:'배', emoji:'🍐', cat:'과일', intro:'4~6개월' },
+  { name:'바나나', emoji:'🍌', cat:'과일', intro:'5~6개월' },
+  { name:'아보카도', emoji:'🥑', cat:'과일', intro:'4~6개월' },
+  { name:'복숭아', emoji:'🍑', cat:'과일', intro:'6개월 이후' },
+  { name:'망고', emoji:'🥭', cat:'과일', intro:'8개월 이후' },
+  { name:'블루베리', emoji:'🫐', cat:'과일', intro:'8개월 이후' },
+  { name:'딸기', emoji:'🍓', cat:'과일', intro:'8개월 이후' },
+  { name:'수박', emoji:'🍉', cat:'과일', intro:'8개월 이후' },
+  { name:'포도', emoji:'🍇', cat:'과일', intro:'10개월 이후' },
+  // 곡류
+  { name:'쌀미음', emoji:'🍚', cat:'곡류', intro:'4~6개월' },
+  { name:'오트밀', emoji:'🌾', cat:'곡류', intro:'5~6개월' },
+  { name:'현미', emoji:'🌾', cat:'곡류', intro:'6개월 이후' },
+  { name:'보리', emoji:'🌾', cat:'곡류', intro:'7개월 이후' },
+  { name:'쌀죽', emoji:'🍚', cat:'곡류', intro:'6개월 이후' },
+  // 단백질
+  { name:'닭고기', emoji:'🍗', cat:'단백질', intro:'7~8개월' },
+  { name:'소고기', emoji:'🥩', cat:'단백질', intro:'6~7개월' },
+  { name:'돼지고기', emoji:'🥩', cat:'단백질', intro:'7~8개월' },
+  { name:'연어', emoji:'🐟', cat:'단백질', intro:'8개월 이후' },
+  { name:'흰살생선', emoji:'🐟', cat:'단백질', intro:'7개월 이후' },
+  { name:'두부', emoji:'⬜', cat:'단백질', intro:'6~7개월' },
+  { name:'달걀노른자', emoji:'🥚', cat:'단백질', intro:'6개월 이후' },
+  { name:'렌틸콩', emoji:'🟤', cat:'단백질', intro:'7개월 이후' },
+  // 유제품
+  { name:'요거트', emoji:'🥛', cat:'유제품', intro:'8개월 이후' },
+  { name:'치즈', emoji:'🧀', cat:'유제품', intro:'8개월 이후' },
+];
+
+let currentFoodCat = '전체';
+let selectedFoodName = '';
+let selectedFoodEmoji = '🥣';
+let selectedReaction = '잘먹음';
+let selectedFoodStatus = 'ate';
+let currentFoodTab = 'all';
+let foodRecords = [];
+
+function initFoodPage() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('food-date').value = today;
+  loadFoodRecords();
+}
+
+function loadFoodRecords() {
+  if (currentUser) {
+    loadFoodFromFirestore();
+  } else {
+    foodRecords = JSON.parse(localStorage.getItem('foodRecords') || '[]');
+    renderFoodList();
+    updateFoodStats();
+  }
+}
+
+let unsubscribeFood = null;
+
+async function loadFoodFromFirestore() {
+  if (!currentUser) return;
+  const babyId = getBabyId();
+  const q = query(
+    collection(db, 'babies', babyId, 'foodRecords'),
+    orderBy('createdAt', 'desc')
+  );
+  if (unsubscribeFood) unsubscribeFood();
+  unsubscribeFood = onSnapshot(q, (snap) => {
+    foodRecords = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // 로컬에도 백업 (오프라인 대비)
+    localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
+    renderFoodList();
+    updateFoodStats();
+  });
+}
+
+function saveFoodRecords() {
+  localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
+}
+
+window.selectFoodCat = (btn, cat) => {
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFoodCat = cat;
+  const query = document.getElementById('food-search-input').value;
+  if (query) searchFood(query);
+};
+
+window.searchFood = (query) => {
+  const resultsEl = document.getElementById('food-search-results');
+  if (!query.trim()) {
+    resultsEl.classList.remove('show');
+    return;
+  }
+  let filtered = FOOD_DB.filter(f =>
+    f.name.includes(query) &&
+    (currentFoodCat === '전체' || f.cat === currentFoodCat)
+  );
+  // 직접 입력 옵션 항상 맨 위
+  const directOption = { name: query, emoji: '🥣', cat: '직접입력', intro: '' };
+  if (!filtered.find(f => f.name === query)) filtered = [directOption, ...filtered];
+
+  if (filtered.length === 0) {
+    resultsEl.classList.remove('show');
+    return;
+  }
+  resultsEl.innerHTML = filtered.slice(0,8).map(f => `
+    <div class="food-result-item" onclick="selectFood('${f.name}','${f.emoji}')">
+      <span class="f-emoji">${f.emoji}</span>
+      <div>
+        <div class="f-name">${f.name}</div>
+        <div class="f-cat">${f.cat}${f.intro ? ' · 도입시기: ' + f.intro : ''}</div>
+      </div>
+    </div>
+  `).join('');
+  resultsEl.classList.add('show');
+};
+
+window.selectFood = (name, emoji) => {
+  selectedFoodName = name;
+  selectedFoodEmoji = emoji;
+  document.getElementById('food-search-input').value = name;
+  document.getElementById('selected-food-display').textContent = emoji + ' ' + name + ' 선택됨';
+  document.getElementById('food-search-results').classList.remove('show');
+};
+
+window.selectReaction = (btn, reaction) => {
+  document.querySelectorAll('.reaction-pill').forEach(b => {
+    if (b.closest('.food-reaction-pills') === btn.closest('.food-reaction-pills')) {
+      b.classList.remove('active');
+    }
+  });
+  btn.classList.add('active');
+  selectedReaction = reaction;
+};
+
+window.selectStatus = (status) => {
+  selectedFoodStatus = status;
+  document.getElementById('status-ate').classList.toggle('active', status === 'ate');
+  document.getElementById('status-todo').classList.toggle('active', status === 'todo');
+};
+
+window.saveFoodRecord = async () => {
+  const name = selectedFoodName || document.getElementById('food-search-input').value.trim();
+  if (!name) { showToast('음식 이름을 입력해주세요'); return; }
+  const date = document.getElementById('food-date').value;
+  const amount = document.getElementById('food-amount').value;
+  const memo = document.getElementById('food-memo').value;
+  const record = {
+    name, emoji: selectedFoodEmoji,
+    date, amount, memo,
+    reaction: selectedFoodStatus === 'todo' ? 'todo' : selectedReaction,
+    status: selectedFoodStatus,
+    createdAt: new Date().toISOString(),
+    createdBy: currentUser?.uid || 'local',
+    createdByName: currentUser?.displayName || '나'
+  };
+
+  if (currentUser) {
+    try {
+      const babyId = getBabyId();
+      await addDoc(collection(db, 'babies', babyId, 'foodRecords'), record);
+    } catch(e) {
+      // 오프라인 시 로컬에 저장
+      record.id = Date.now().toString();
+      foodRecords.unshift(record);
+      saveFoodRecords();
+      renderFoodList();
+      updateFoodStats();
+    }
+  } else {
+    record.id = Date.now().toString();
+    foodRecords.unshift(record);
+    saveFoodRecords();
+    renderFoodList();
+    updateFoodStats();
+  }
+
+  // 폼 초기화
+  document.getElementById('food-search-input').value = '';
+  document.getElementById('food-amount').value = '';
+  document.getElementById('food-memo').value = '';
+  document.getElementById('selected-food-display').textContent = '👆 위에서 음식을 검색하거나 직접 입력하세요';
+  selectedFoodName = '';
+  selectedFoodEmoji = '🥣';
+  showToast('🥣 이유식 기록 저장!');
+};
+
+window.deleteFoodRecord = async (id) => {
+  if (!confirm('삭제할까요?')) return;
+  if (currentUser) {
+    try {
+      await deleteDoc(doc(db, 'babies', getBabyId(), 'foodRecords', id));
+    } catch(e) {
+      foodRecords = foodRecords.filter(r => r.id !== id);
+      saveFoodRecords();
+      renderFoodList();
+      updateFoodStats();
+    }
+  } else {
+    foodRecords = foodRecords.filter(r => r.id !== id);
+    saveFoodRecords();
+    renderFoodList();
+    updateFoodStats();
+  }
+  showToast('🗑️ 삭제되었어요');
+};
+
+window.switchFoodTab = (btn, tab) => {
+  document.querySelectorAll('.food-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFoodTab = tab;
+  renderFoodList();
+};
+
+function getReactionLabel(reaction) {
+  const map = {
+    '잘먹음': { text:'잘먹음 😋', cls:'good' },
+    '보통': { text:'보통 😐', cls:'warn' },
+    '알레르기': { text:'알레르기 ⚠️', cls:'bad' },
+    '거부': { text:'거부 🙅', cls:'reject' },
+    'todo': { text:'예정 📋', cls:'todo' },
+  };
+  return map[reaction] || { text: reaction, cls:'good' };
+}
+
+function renderFoodList() {
+  let filtered = foodRecords;
+  if (currentFoodTab === 'ate') filtered = foodRecords.filter(r => r.status === 'ate');
+  else if (currentFoodTab === 'todo') filtered = foodRecords.filter(r => r.status === 'todo');
+  else if (currentFoodTab === 'reject') filtered = foodRecords.filter(r => r.reaction === '거부' || r.reaction === '알레르기');
+
+  const el = document.getElementById('food-item-list');
+  if (!el) return;
+  if (filtered.length === 0) {
+    el.innerHTML = '<div class="empty-food">🥣 기록이 없어요</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(r => {
+    const badge = getReactionLabel(r.reaction);
+    return `
+      <div class="food-item">
+        <span class="fi-emoji">${r.emoji}</span>
+        <div class="fi-info">
+          <div class="fi-name">${r.name}</div>
+          <div class="fi-detail">${r.amount ? r.amount + ' · ' : ''}${r.memo || ''}</div>
+          <div class="fi-date">📅 ${r.date}</div>
+        </div>
+        <span class="fi-badge ${badge.cls}">${badge.text}</span>
+        <button class="food-del-btn" onclick="deleteFoodRecord('${r.id}')">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateFoodStats() {
+  const ateCount = [...new Set(foodRecords.filter(r => r.status === 'ate').map(r => r.name))].length;
+  const todoCount = [...new Set(foodRecords.filter(r => r.status === 'todo').map(r => r.name))].length;
+  const alertCount = [...new Set(foodRecords.filter(r => r.reaction === '알레르기').map(r => r.name))].length;
+  const ateEl = document.getElementById('food-ate-count');
+  const todoEl = document.getElementById('food-todo-count');
+  const alertEl = document.getElementById('food-alert-count');
+  if (ateEl) ateEl.textContent = ateCount;
+  if (todoEl) todoEl.textContent = todoCount;
+  if (alertEl) alertEl.textContent = alertCount;
+}
+
+// 음식 검색창 외부 클릭 시 닫기
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.food-search-wrap')) {
+    const r = document.getElementById('food-search-results');
+    if (r) r.classList.remove('show');
+  }
+});
 
 </script>
 </body>
