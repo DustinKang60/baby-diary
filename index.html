@@ -588,6 +588,12 @@
     background: none; border: none; cursor: pointer; font-size: 14px;
     color: var(--text-light); padding: 4px; border-radius: 8px; flex-shrink: 0;
   }
+  .food-edit-btn {
+    background: none; border: none; cursor: pointer; font-size: 16px;
+    padding: 4px; border-radius: 8px; flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .food-edit-btn:active { transform: scale(0.9); }
   .empty-food { text-align: center; padding: 30px 20px; color: var(--text-light); font-size: 14px; }
 
   /* Scrollbar */
@@ -2415,6 +2421,10 @@ function renderFoodList() {
   }
   el.innerHTML = filtered.map(r => {
     const badge = getReactionLabel(r.reaction);
+    // 수정 버튼: 예정→먹음 변환, 반응 변경
+    const editBtns = r.status === 'todo'
+      ? `<button class="food-edit-btn" onclick="markFoodAsEaten('${r.id}')" title="먹었어요로 변경">✅</button>`
+      : `<button class="food-edit-btn" onclick="changeFoodReaction('${r.id}')" title="반응 변경">✏️</button>`;
     return `
       <div class="food-item">
         <span class="fi-emoji">${r.emoji}</span>
@@ -2424,11 +2434,83 @@ function renderFoodList() {
           <div class="fi-date">📅 ${r.date}</div>
         </div>
         <span class="fi-badge ${badge.cls}">${badge.text}</span>
+        ${editBtns}
         <button class="food-del-btn" onclick="deleteFoodRecord('${r.id}')">✕</button>
       </div>
     `;
   }).join('');
 }
+
+// 예정 → 먹었어요로 변경
+window.markFoodAsEaten = async (id) => {
+  const idx = foodRecords.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  const updated = { ...foodRecords[idx], status: 'ate', reaction: '잘먹음' };
+  if (currentUser) {
+    try {
+      const { doc: firestoreDoc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+      await updateDoc(firestoreDoc(db, 'babies', getBabyId(), 'foodRecords', id), { status: 'ate', reaction: '잘먹음' });
+    } catch(e) {
+      foodRecords[idx] = updated;
+      saveFoodRecords();
+      renderFoodList(); updateFoodStats(); updateSummary(); renderTimeline(); renderFeedback();
+    }
+  } else {
+    foodRecords[idx] = updated;
+    saveFoodRecords();
+    renderFoodList(); updateFoodStats(); updateSummary(); renderTimeline(); renderFeedback();
+  }
+  showToast('✅ 먹었어요로 변경됐어요!');
+};
+
+// 반응 변경 (먹은 음식)
+window.changeFoodReaction = (id) => {
+  const reactions = ['잘먹음', '보통', '알레르기', '거부'];
+  const labels = { '잘먹음':'😋 잘먹음', '보통':'😐 보통', '알레르기':'⚠️ 알레르기', '거부':'🙅 거부' };
+  const idx = foodRecords.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  const current = foodRecords[idx].reaction;
+  const options = reactions.filter(r => r !== current).map(r => `"${r}"`).join(', ');
+  // 간단한 선택 UI를 인라인으로 표시
+  const el = document.querySelector(`[onclick="changeFoodReaction('${id}')"]`);
+  if (!el) return;
+  const wrap = el.closest('.food-item');
+  // 이미 선택창 있으면 닫기
+  const existing = wrap.querySelector('.reaction-select-inline');
+  if (existing) { existing.remove(); return; }
+  const div = document.createElement('div');
+  div.className = 'reaction-select-inline';
+  div.style.cssText = 'position:absolute;right:40px;top:50%;transform:translateY(-50%);background:white;border:2px solid var(--pink-light);border-radius:12px;padding:6px;display:flex;gap:4px;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,0.12);';
+  wrap.style.position = 'relative';
+  reactions.filter(r => r !== current).forEach(reaction => {
+    const btn = document.createElement('button');
+    const rmap = { '잘먹음':'😋', '보통':'😐', '알레르기':'⚠️', '거부':'🙅' };
+    btn.textContent = rmap[reaction];
+    btn.title = reaction;
+    btn.style.cssText = 'border:none;background:none;font-size:18px;cursor:pointer;padding:4px;border-radius:8px;';
+    btn.onclick = async () => {
+      div.remove();
+      const updated = { ...foodRecords[idx], reaction };
+      if (currentUser) {
+        try {
+          const { doc: fd, updateDoc: ud } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+          await ud(fd(db, 'babies', getBabyId(), 'foodRecords', id), { reaction });
+        } catch(e) {
+          foodRecords[idx] = updated;
+          saveFoodRecords();
+          renderFoodList(); updateFoodStats();
+        }
+      } else {
+        foodRecords[idx] = updated;
+        saveFoodRecords();
+        renderFoodList(); updateFoodStats();
+      }
+      showToast('반응이 변경됐어요!');
+    };
+    div.appendChild(btn);
+  });
+  wrap.appendChild(div);
+};
 
 function updateFoodStats() {
   const ateCount = [...new Set(foodRecords.filter(r => r.status === 'ate').map(r => r.name))].length;
