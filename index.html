@@ -732,6 +732,23 @@
         <div class="s-label">💧 기저귀</div>
       </div>
     </div>
+    <div class="summary-row" style="margin-top:8px;">
+      <div class="summary-card" style="background:linear-gradient(135deg,#FFF8F0,#FFE8CC);">
+        <div class="s-num" style="color:#FFB347;" id="sum-food">0</div>
+        <div class="s-unit">회</div>
+        <div class="s-label">🥣 이유식</div>
+      </div>
+      <div class="summary-card" style="background:linear-gradient(135deg,#FFF0F4,#FFE4EC);">
+        <div class="s-num" style="color:#FF8FAB;" id="sum-temp">-</div>
+        <div class="s-unit">°C</div>
+        <div class="s-label">🌡️ 체온</div>
+      </div>
+      <div class="summary-card" style="background:linear-gradient(135deg,#F3F0FF,#E8E0FF);">
+        <div class="s-num" style="color:#C9B8FF;" id="sum-bath">0</div>
+        <div class="s-unit">회</div>
+        <div class="s-label">🛁 목욕</div>
+      </div>
+    </div>
 
     <!-- ANALYSIS FEEDBACK -->
     <div id="feedback-section"></div>
@@ -1483,16 +1500,37 @@ window.deleteRecord = async (id) => {
 // ── RENDER TIMELINE ──
 function renderTimeline() {
   const today = new Date().toDateString();
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // 일반 기록
   const todayRecords = records.filter(r => new Date(r.time).toDateString() === today);
-  todayRecords.sort((a,b) => new Date(b.time) - new Date(a.time));
+
+  // 이유식 기록 (오늘 날짜, 먹은 것만)
+  const todayFood = foodRecords
+    .filter(r => r.date === todayStr && r.status === 'ate')
+    .map(r => ({
+      id: r.id,
+      type: 'food',
+      icon: r.emoji || '🥣',
+      label: '이유식',
+      detail: r.name + (r.amount ? ' · ' + r.amount : ''),
+      memo: r.memo,
+      time: r.createdAt || (r.date + 'T12:00:00'),
+      isFoodRecord: true
+    }));
+
+  // 합치고 시간순 정렬
+  const allRecords = [...todayRecords, ...todayFood]
+    .sort((a,b) => new Date(b.time) - new Date(a.time));
+
   const el = document.getElementById('timeline-list');
-  if (todayRecords.length === 0) {
+  if (allRecords.length === 0) {
     el.innerHTML = `<div class="empty-timeline"><div class="et-emoji">🌙</div><p>아직 오늘 기록이 없어요<br>위에서 기록을 시작해보세요!</p></div>`;
     return;
   }
-  el.innerHTML = todayRecords.map(r => `
+  el.innerHTML = allRecords.map(r => `
     <div class="timeline-item">
-      <div class="tl-icon ${r.type}">${r.icon || '📝'}</div>
+      <div class="tl-icon ${r.type}" style="${r.type==='food' ? 'background:linear-gradient(135deg,#FFF8F0,#FFE8CC);' : ''}">${r.icon || '📝'}</div>
       <div class="tl-content">
         <div class="tl-title">${r.label || r.type}</div>
         <div class="tl-detail">${r.detail || ''}</div>
@@ -1500,7 +1538,7 @@ function renderTimeline() {
         <div class="tl-time">${formatTime(r.time)}</div>
       </div>
       <div class="tl-actions">
-        <button class="tl-del-btn" onclick="deleteRecord('${r.id}')">✕</button>
+        <button class="tl-del-btn" onclick="${r.isFoodRecord ? `deleteFoodRecord('${r.id}')` : `deleteRecord('${r.id}')`}">✕</button>
       </div>
     </div>
   `).join('');
@@ -1518,9 +1556,19 @@ function updateSummary() {
   const feedCount = todayRecs.filter(r => r.type === 'feed').length;
   const diaperCount = todayRecs.filter(r => r.type === 'diaper').length;
   const sleepMins = todayRecs.filter(r => r.type === 'sleep' && r.duration).reduce((s,r) => s + r.duration, 0);
+  const bathCount = todayRecs.filter(r => r.type === 'bath').length;
+  const tempRecs = todayRecs.filter(r => r.type === 'temp');
+  const lastTemp = tempRecs.length ? tempRecs[tempRecs.length-1].value : null;
+  // 이유식: foodRecords에서 오늘 날짜 기준
+  const todayStr = new Date().toISOString().split('T')[0];
+  const foodCount = foodRecords.filter(r => r.date === todayStr && r.status === 'ate').length;
+
   document.getElementById('sum-feed').textContent = feedCount;
   document.getElementById('sum-sleep').textContent = (sleepMins / 60).toFixed(1);
   document.getElementById('sum-diaper').textContent = diaperCount;
+  document.getElementById('sum-food').textContent = foodCount;
+  document.getElementById('sum-temp').textContent = lastTemp || '-';
+  document.getElementById('sum-bath').textContent = bathCount;
 }
 
 function updateLastFeed() {
@@ -1933,6 +1981,7 @@ function renderFeedback() {
   if (!el || !babyInfo) return;
   const ageMonths = getAgeMonths();
   const today = new Date().toDateString();
+  const todayStr = new Date().toISOString().split('T')[0];
   const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
   
   const feedCount = todayRecs.filter(r => r.type === 'feed').length;
@@ -1942,10 +1991,17 @@ function renderFeedback() {
   const pooCount = todayRecs.filter(r => r.type === 'diaper' && (r.diaperType||'').includes('대변')).length;
   const tempRecs = todayRecs.filter(r => r.type === 'temp');
   const lastTemp = tempRecs.length ? tempRecs[tempRecs.length-1].value : null;
+  // 이유식
+  const foodCount = foodRecords.filter(r => r.date === todayStr && r.status === 'ate').length;
+  const foodNames = foodRecords.filter(r => r.date === todayStr && r.status === 'ate').map(r => r.name).join(', ');
+  const alertFood = foodRecords.filter(r => r.reaction === '알레르기').map(r => r.name);
 
   const feedNorm = getNorm('feed', ageMonths);
   const sleepNorm = getNorm('sleep', ageMonths);
   const diaperNorm = getNorm('diaper', ageMonths);
+  // 이유식 기준: 6개월 미만 0~1회, 6~8개월 1~2회, 8개월 이상 2~3회
+  const foodNormMin = ageMonths < 6 ? 0 : ageMonths < 8 ? 1 : 2;
+  const foodNormMax = ageMonths < 6 ? 1 : ageMonths < 8 ? 2 : 3;
 
   const getStatus = (val, min, max) => {
     if (val < min) return { cls: 'low', text: '부족' };
@@ -1956,6 +2012,7 @@ function renderFeedback() {
   const feedStatus = getStatus(feedCount, feedNorm.min, feedNorm.maxN);
   const sleepStatus = getStatus(sleepHours, sleepNorm.min, sleepNorm.maxN);
   const diaperStatus = getStatus(diaperCount, diaperNorm.min, diaperNorm.maxN);
+  const foodStatus = ageMonths >= 5 ? getStatus(foodCount, foodNormMin, foodNormMax) : null;
 
   // 인사이트 메시지 생성
   const insights = [];
@@ -1974,6 +2031,12 @@ function renderFeedback() {
   }
   if (pooCount === 0 && ageMonths >= 1 && diaperCount > 0) {
     insights.push(`💩 오늘 대변 기록이 없어요. 2~3일 이상 없으면 소아과에 문의해보세요.`);
+  }
+  if (ageMonths >= 5 && foodCount > 0) {
+    insights.push(`🥣 오늘 이유식 <strong>${foodCount}회</strong> 먹었어요${foodNames ? ' (' + foodNames + ')' : ''}. ${ageMonths}개월 기준 하루 ${foodNormMin}~${foodNormMax}회 권장이에요.`);
+  }
+  if (alertFood.length > 0) {
+    insights.push(`⚠️ 알레르기 반응 음식: <strong>${alertFood.join(', ')}</strong> — 다시 시도 시 주의하세요.`);
   }
   if (feedCount === 0 && sleepHours === 0 && diaperCount === 0) {
     el.innerHTML = '';
@@ -2002,6 +2065,13 @@ function renderFeedback() {
           <span style="font-size:11px;color:var(--text-light);">권장 ${diaperNorm.min}~${diaperNorm.maxN}회</span>
           <span class="fb-status ${diaperStatus.cls}">${diaperStatus.text}</span>
         </div>
+        ${ageMonths >= 5 ? `
+        <div class="feedback-row">
+          <span class="fb-label">🥣 이유식</span>
+          <span class="fb-value">${foodCount}회</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${foodNormMin}~${foodNormMax}회</span>
+          <span class="fb-status ${foodStatus ? foodStatus.cls : 'ok'}">${foodStatus ? foodStatus.text : '정상 ✓'}</span>
+        </div>` : ''}
         ${lastTemp ? `
         <div class="feedback-row">
           <span class="fb-label">🌡️ 체온</span>
