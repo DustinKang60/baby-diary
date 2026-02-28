@@ -1298,7 +1298,7 @@ function checkOnboarding() {
     showApp();
   } else {
     document.getElementById('onboarding').style.display = 'block';
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateStr();
     document.getElementById('ob-birth').max = today;
   }
 }
@@ -1522,14 +1522,14 @@ window.deleteRecord = async (id) => {
 // ── RENDER TIMELINE ──
 function renderTimeline() {
   const today = new Date().toDateString();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateStr();
 
   // 일반 기록
   const todayRecords = records.filter(r => new Date(r.time).toDateString() === today);
 
   // 이유식 기록 (오늘 날짜, 먹은 것만)
   const todayFood = foodRecords
-    .filter(r => r.date === todayStr && r.status === 'ate')
+    .filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate')
     .map(r => ({
       id: r.id,
       type: 'food',
@@ -1566,6 +1566,15 @@ function renderTimeline() {
   `).join('');
 }
 
+// ── 날짜 헬퍼 (로컬 시간 기준) ──
+function getLocalDateStr(date) {
+  const d = date || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
 function formatTime(iso) {
   const d = new Date(iso);
   return d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', hour12:true });
@@ -1582,8 +1591,8 @@ function updateSummary() {
   const tempRecs = todayRecs.filter(r => r.type === 'temp');
   const lastTemp = tempRecs.length ? tempRecs[tempRecs.length-1].value : null;
   // 이유식: foodRecords에서 오늘 날짜 기준
-  const todayStr = new Date().toISOString().split('T')[0];
-  const foodCount = foodRecords.filter(r => r.date === todayStr && r.status === 'ate').length;
+  const todayStr = getLocalDateStr();
+  const foodCount = foodRecords.filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate').length;
 
   document.getElementById('sum-feed').textContent = feedCount;
   document.getElementById('sum-sleep').textContent = (sleepMins / 60).toFixed(1);
@@ -1682,7 +1691,7 @@ function renderBarCharts() {
   })), 'blue');
   renderBarChart('food-bar-chart', days.map(d => ({
     label: d.label,
-    value: foodRecords.filter(r => r.status==='ate' && r.date === d.dateStr).length,
+    value: foodRecords.filter(r => r.status==='ate' && (r.localDate || r.date) === d.dateStr).length,
     max: 5
   })), 'orange');
   renderBarChart('diaper-bar-chart', days.map(d => ({
@@ -1721,10 +1730,10 @@ function renderBarChart(id, data, color) {
 function renderPieChart() {
   const today = new Date().toDateString();
   const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
-  const todayStr2 = new Date().toISOString().split('T')[0];
+  const todayStr2 = getLocalDateStr();
   const counts = { feed:0, sleep:0, diaper:0, food:0, bath:0, temp:0 };
   todayRecs.forEach(r => { if(counts[r.type]!==undefined) counts[r.type]++; });
-  counts.food = foodRecords.filter(r => r.date === todayStr2 && r.status === 'ate').length;
+  counts.food = foodRecords.filter(r => (r.localDate || r.date) === todayStr2 && r.status === 'ate').length;
   const labels = { feed:'수유', sleep:'수면', diaper:'기저귀', food:'이유식', bath:'목욕', temp:'체온' };
   const colors = { feed:'#FF8FAB', sleep:'#93C6F5', diaper:'#A8E6CF', food:'#FFB347', bath:'#C9B8FF', temp:'#FFD93D' };
   const canvas = document.getElementById('pieChart');
@@ -2019,7 +2028,7 @@ function renderFeedback() {
   if (!el || !babyInfo) return;
   const ageMonths = getAgeMonths();
   const today = new Date().toDateString();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateStr();
   const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
   
   const feedCount = todayRecs.filter(r => r.type === 'feed').length;
@@ -2030,8 +2039,8 @@ function renderFeedback() {
   const tempRecs = todayRecs.filter(r => r.type === 'temp');
   const lastTemp = tempRecs.length ? tempRecs[tempRecs.length-1].value : null;
   // 이유식
-  const foodCount = foodRecords.filter(r => r.date === todayStr && r.status === 'ate').length;
-  const foodNames = foodRecords.filter(r => r.date === todayStr && r.status === 'ate').map(r => r.name).join(', ');
+  const foodCount = foodRecords.filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate').length;
+  const foodNames = foodRecords.filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate').map(r => r.name).join(', ');
   const alertFood = foodRecords.filter(r => r.reaction === '알레르기').map(r => r.name);
 
   const feedNorm = getNorm('feed', ageMonths);
@@ -2187,60 +2196,35 @@ let currentFoodTab = 'all';
 let foodRecords = [];
 
 function initFoodPage() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateStr();
   document.getElementById('food-date').value = today;
   loadFoodRecords();
 }
 
 // 앱 시작 시 이유식 데이터 로드 (홈화면 요약/타임라인 업데이트용)
+// ── 이유식 단일 리스너 (홈화면 + 이유식탭 모두 업데이트) ──
+let unsubscribeFood = null;
+
 function loadFoodRecordsOnStart() {
   if (currentUser) {
-    const babyId = getBabyId();
-    const q = query(
-      collection(db, 'babies', babyId, 'foodRecords'),
-      orderBy('createdAt', 'desc')
-    );
-    if (unsubscribeFood) unsubscribeFood();
-    unsubscribeFood = onSnapshot(q, (snap) => {
-      foodRecords = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
-      // 홈화면 업데이트
-      updateSummary();
-      renderTimeline();
-      renderFeedback();
-      // 이유식 탭이 열려있으면 목록도 업데이트
-      if (document.getElementById('page-food').classList.contains('active')) {
-        renderFoodList();
-        updateFoodStats();
-      }
-    });
+    initFoodListener();
   } else {
     foodRecords = JSON.parse(localStorage.getItem('foodRecords') || '[]');
-    updateSummary();
-    renderTimeline();
-    renderFeedback();
+    refreshAllFoodViews();
   }
 }
 
 function loadFoodRecords() {
   if (currentUser) {
-    // 이미 loadFoodRecordsOnStart에서 리스너가 등록되어 있으면 목록만 렌더링
-    if (foodRecords.length > 0) {
-      renderFoodList();
-      updateFoodStats();
-    } else {
-      loadFoodFromFirestore();
-    }
+    if (!unsubscribeFood) initFoodListener();
+    else refreshAllFoodViews();
   } else {
     foodRecords = JSON.parse(localStorage.getItem('foodRecords') || '[]');
-    renderFoodList();
-    updateFoodStats();
+    refreshAllFoodViews();
   }
 }
 
-let unsubscribeFood = null;
-
-async function loadFoodFromFirestore() {
+function initFoodListener() {
   if (!currentUser) return;
   const babyId = getBabyId();
   const q = query(
@@ -2250,11 +2234,27 @@ async function loadFoodFromFirestore() {
   if (unsubscribeFood) unsubscribeFood();
   unsubscribeFood = onSnapshot(q, (snap) => {
     foodRecords = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // 로컬에도 백업 (오프라인 대비)
     localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
+    refreshAllFoodViews();
+  });
+}
+
+function refreshAllFoodViews() {
+  // 홈화면
+  updateSummary();
+  renderTimeline();
+  renderFeedback();
+  // 이유식 탭이 열려 있으면
+  const foodPage = document.getElementById('page-food');
+  if (foodPage && foodPage.classList.contains('active')) {
     renderFoodList();
     updateFoodStats();
-  });
+  }
+  // 통계 탭이 열려 있으면
+  const statsPage = document.getElementById('page-stats');
+  if (statsPage && statsPage.classList.contains('active')) {
+    renderStats();
+  }
 }
 
 function saveFoodRecords() {
@@ -2335,28 +2335,22 @@ window.saveFoodRecord = async () => {
     reaction: selectedFoodStatus === 'todo' ? 'todo' : selectedReaction,
     status: selectedFoodStatus,
     createdAt: new Date().toISOString(),
+    localDate: date, // 사용자가 선택한 날짜
     createdBy: currentUser?.uid || 'local',
     createdByName: currentUser?.displayName || '나'
   };
+
+  // 즉시 로컬에 추가하여 화면 반영 (Firebase도 동기화)
+  record.id = Date.now().toString();
+  foodRecords.unshift(record);
+  saveFoodRecords();
+  refreshAllFoodViews();
 
   if (currentUser) {
     try {
       const babyId = getBabyId();
       await addDoc(collection(db, 'babies', babyId, 'foodRecords'), record);
-    } catch(e) {
-      // 오프라인 시 로컬에 저장
-      record.id = Date.now().toString();
-      foodRecords.unshift(record);
-      saveFoodRecords();
-      renderFoodList();
-      updateFoodStats();
-    }
-  } else {
-    record.id = Date.now().toString();
-    foodRecords.unshift(record);
-    saveFoodRecords();
-    renderFoodList();
-    updateFoodStats();
+    } catch(e) { console.log('food save error', e); }
   }
 
   // 폼 초기화
@@ -2446,19 +2440,14 @@ window.markFoodAsEaten = async (id) => {
   const idx = foodRecords.findIndex(r => r.id === id);
   if (idx === -1) return;
   const updated = { ...foodRecords[idx], status: 'ate', reaction: '잘먹음' };
+  foodRecords[idx] = updated;
+  saveFoodRecords();
+  refreshAllFoodViews(); // 즉시 화면 반영
   if (currentUser) {
     try {
       const { doc: firestoreDoc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
       await updateDoc(firestoreDoc(db, 'babies', getBabyId(), 'foodRecords', id), { status: 'ate', reaction: '잘먹음' });
-    } catch(e) {
-      foodRecords[idx] = updated;
-      saveFoodRecords();
-      renderFoodList(); updateFoodStats(); updateSummary(); renderTimeline(); renderFeedback();
-    }
-  } else {
-    foodRecords[idx] = updated;
-    saveFoodRecords();
-    renderFoodList(); updateFoodStats(); updateSummary(); renderTimeline(); renderFeedback();
+    } catch(e) { console.log('sync error', e); }
   }
   showToast('✅ 먹었어요로 변경됐어요!');
 };
