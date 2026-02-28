@@ -293,6 +293,7 @@
   .bar.pink { background: linear-gradient(to top, var(--pink), #FFB3C6); }
   .bar.blue { background: linear-gradient(to top, var(--blue), #B8DCFF); }
   .bar.mint { background: linear-gradient(to top, var(--mint), #C8F0DC); }
+  .bar.orange { background: linear-gradient(to top, #FFB347, #FFD4A0); }
   .bar-label { font-size: 10px; color: var(--text-light); }
   .bar-val { font-size: 10px; font-weight: 700; color: var(--text-mid); }
   .pie-container { display: flex; align-items: center; gap: 20px; }
@@ -767,17 +768,23 @@
         <span class="q-emoji">💧</span>
         <span class="q-label">기저귀</span>
       </button>
-      <button class="quick-btn bath" onclick="openModal('bath')">
-        <span class="q-emoji">🛁</span>
-        <span class="q-label">목욕</span>
+      <button class="quick-btn" style="background:linear-gradient(135deg,#FFF8F0,#FFE8CC);" onclick="switchPage('food', document.querySelectorAll('.nav-btn')[2])">
+        <span class="q-emoji">🥣</span>
+        <span class="q-label">이유식</span>
       </button>
       <button class="quick-btn temp" onclick="openModal('temp')">
         <span class="q-emoji">🌡️</span>
         <span class="q-label">체온</span>
       </button>
-      <button class="quick-btn memo" onclick="openModal('memo')">
-        <span class="q-emoji">📝</span>
-        <span class="q-label">메모</span>
+      <button class="quick-btn bath" onclick="openModal('bath')">
+        <span class="q-emoji">🛁</span>
+        <span class="q-label">목욕</span>
+      </button>
+    </div>
+    <div style="margin:0 16px 4px;">
+      <button class="quick-btn memo" style="width:100%;flex-direction:row;gap:8px;padding:12px 16px;justify-content:flex-start;" onclick="openModal('memo')">
+        <span style="font-size:20px;">📝</span>
+        <span class="q-label" style="font-size:13px;">메모 남기기</span>
       </button>
     </div>
 
@@ -804,6 +811,14 @@
       <div class="chart-card">
         <div class="chart-title">😴 일일 수면 시간 (7일)</div>
         <div class="bar-chart" id="sleep-bar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🥣 일일 이유식 횟수 (7일)</div>
+        <div class="bar-chart" id="food-bar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">💧 일일 기저귀 횟수 (7일)</div>
+        <div class="bar-chart" id="diaper-bar-chart"></div>
       </div>
       <div class="chart-card">
         <div class="chart-title">오늘 하루 기록 분포</div>
@@ -1328,6 +1343,7 @@ function showApp() {
   updateHeader();
   setDefaultTimes();
   loadRecords();
+  loadFoodRecordsOnStart(); // 이유식도 앱 시작시 로드
   renderVaccineList();
   generateInviteLink();
 }
@@ -1658,13 +1674,27 @@ function renderBarCharts() {
     value: +(records.filter(r => r.type==='sleep' && r.duration && new Date(r.time).toDateString()===d.date).reduce((s,r)=>s+r.duration,0)/60).toFixed(1),
     max: 20
   })), 'blue');
+  renderBarChart('food-bar-chart', days.map(d => ({
+    label: d.label,
+    value: foodRecords.filter(r => r.status==='ate' && r.date === d.dateStr).length,
+    max: 5
+  })), 'orange');
+  renderBarChart('diaper-bar-chart', days.map(d => ({
+    label: d.label,
+    value: records.filter(r => r.type==='diaper' && new Date(r.time).toDateString()===d.date).length,
+    max: 15
+  })), 'mint');
 }
 
 function getLast7Days() {
   const arr = [];
   for (let i=6; i>=0; i--) {
     const d = new Date(); d.setDate(d.getDate()-i);
-    arr.push({ date: d.toDateString(), label: ['일','월','화','수','목','금','토'][d.getDay()] });
+    arr.push({
+      date: d.toDateString(),
+      dateStr: d.toISOString().split('T')[0],
+      label: ['일','월','화','수','목','금','토'][d.getDay()]
+    });
   }
   return arr;
 }
@@ -1685,10 +1715,12 @@ function renderBarChart(id, data, color) {
 function renderPieChart() {
   const today = new Date().toDateString();
   const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
-  const counts = { feed:0, sleep:0, diaper:0, bath:0, temp:0, memo:0 };
+  const todayStr2 = new Date().toISOString().split('T')[0];
+  const counts = { feed:0, sleep:0, diaper:0, food:0, bath:0, temp:0 };
   todayRecs.forEach(r => { if(counts[r.type]!==undefined) counts[r.type]++; });
-  const labels = { feed:'수유', sleep:'수면', diaper:'기저귀', bath:'목욕', temp:'체온', memo:'메모' };
-  const colors = { feed:'#FF8FAB', sleep:'#93C6F5', diaper:'#A8E6CF', bath:'#C9B8FF', temp:'#FFD93D', memo:'#FFB347' };
+  counts.food = foodRecords.filter(r => r.date === todayStr2 && r.status === 'ate').length;
+  const labels = { feed:'수유', sleep:'수면', diaper:'기저귀', food:'이유식', bath:'목욕', temp:'체온' };
+  const colors = { feed:'#FF8FAB', sleep:'#93C6F5', diaper:'#A8E6CF', food:'#FFB347', bath:'#C9B8FF', temp:'#FFD93D' };
   const canvas = document.getElementById('pieChart');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -2154,9 +2186,45 @@ function initFoodPage() {
   loadFoodRecords();
 }
 
+// 앱 시작 시 이유식 데이터 로드 (홈화면 요약/타임라인 업데이트용)
+function loadFoodRecordsOnStart() {
+  if (currentUser) {
+    const babyId = getBabyId();
+    const q = query(
+      collection(db, 'babies', babyId, 'foodRecords'),
+      orderBy('createdAt', 'desc')
+    );
+    if (unsubscribeFood) unsubscribeFood();
+    unsubscribeFood = onSnapshot(q, (snap) => {
+      foodRecords = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
+      // 홈화면 업데이트
+      updateSummary();
+      renderTimeline();
+      renderFeedback();
+      // 이유식 탭이 열려있으면 목록도 업데이트
+      if (document.getElementById('page-food').classList.contains('active')) {
+        renderFoodList();
+        updateFoodStats();
+      }
+    });
+  } else {
+    foodRecords = JSON.parse(localStorage.getItem('foodRecords') || '[]');
+    updateSummary();
+    renderTimeline();
+    renderFeedback();
+  }
+}
+
 function loadFoodRecords() {
   if (currentUser) {
-    loadFoodFromFirestore();
+    // 이미 loadFoodRecordsOnStart에서 리스너가 등록되어 있으면 목록만 렌더링
+    if (foodRecords.length > 0) {
+      renderFoodList();
+      updateFoodStats();
+    } else {
+      loadFoodFromFirestore();
+    }
   } else {
     foodRecords = JSON.parse(localStorage.getItem('foodRecords') || '[]');
     renderFoodList();
