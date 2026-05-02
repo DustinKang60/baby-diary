@@ -1,0 +1,2526 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#FF8FAB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="아기일기">
+<link rel="manifest" href="manifest.json">
+<title>아기일기 🍼</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #FF8FAB;
+    --pink-light: #FFD6E0;
+    --pink-pale: #FFF0F4;
+    --mint: #A8E6CF;
+    --mint-light: #D4F5E9;
+    --mint-pale: #F0FBF6;
+    --yellow: #FFD93D;
+    --yellow-pale: #FFFBEC;
+    --purple: #C9B8FF;
+    --purple-pale: #F3F0FF;
+    --blue: #93C6F5;
+    --blue-pale: #EBF5FF;
+    --orange: #FFB347;
+    --text-dark: #2D2D2D;
+    --text-mid: #6B6B6B;
+    --text-light: #ABABAB;
+    --white: #FFFFFF;
+    --bg: #FFF8FA;
+    --card-shadow: 0 4px 20px rgba(255,143,171,0.15);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text-dark);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── SPLASH SCREEN ── */
+  #splash {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, #FF8FAB 0%, #FFB3C6 40%, #C9B8FF 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.5s ease;
+  }
+  #splash .logo { font-size: 72px; animation: bounce 1s infinite alternate; }
+  #splash h1 { font-family: 'Nunito', sans-serif; font-size: 32px; font-weight: 900; color: white; margin-top: 16px; letter-spacing: -0.5px; }
+  #splash p { color: rgba(255,255,255,0.85); margin-top: 8px; font-size: 15px; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+
+  /* ── ONBOARDING ── */
+  #onboarding {
+    display: none; position: fixed; inset: 0; z-index: 999;
+    background: var(--bg); overflow-y: auto;
+  }
+  .onboard-header {
+    background: linear-gradient(135deg, #FF8FAB, #C9B8FF);
+    padding: 60px 24px 40px;
+    text-align: center; border-radius: 0 0 40px 40px;
+  }
+  .onboard-header .emoji { font-size: 64px; }
+  .onboard-header h2 { font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 900; color: white; margin-top: 12px; }
+  .onboard-header p { color: rgba(255,255,255,0.9); margin-top: 6px; font-size: 14px; }
+  .onboard-body { padding: 28px 20px 40px; }
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-mid); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 14px 16px; border: 2px solid var(--pink-light);
+    border-radius: var(--radius-sm); font-size: 16px; font-family: inherit;
+    background: white; color: var(--text-dark); outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--pink); }
+  .gender-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gender-btn {
+    padding: 16px; border: 2px solid var(--pink-light); border-radius: var(--radius-sm);
+    background: white; font-size: 24px; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .gender-btn span { font-size: 13px; font-weight: 700; color: var(--text-mid); }
+  .gender-btn.selected { border-color: var(--pink); background: var(--pink-pale); }
+  .preterm-row { display: flex; align-items: center; gap: 12px; }
+  .toggle-switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: #ddd; border-radius: 28px; cursor: pointer;
+    transition: 0.3s;
+  }
+  .toggle-slider:before {
+    content: ''; position: absolute; width: 22px; height: 22px;
+    left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.3s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--pink); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); }
+  .btn-primary {
+    width: 100%; padding: 18px; background: linear-gradient(135deg, var(--pink), var(--purple));
+    border: none; border-radius: var(--radius); font-size: 17px; font-weight: 800;
+    color: white; cursor: pointer; font-family: 'Nunito', sans-serif;
+    letter-spacing: 0.3px; transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 6px 20px rgba(255,143,171,0.4);
+  }
+  .btn-primary:active { transform: scale(0.97); }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    display: none; position: fixed; inset: 0; z-index: 998;
+    background: linear-gradient(135deg, #FF8FAB 0%, #FFB3C6 40%, #C9B8FF 100%);
+    align-items: center; justify-content: center; flex-direction: column;
+    padding: 40px;
+  }
+  #auth-screen .auth-card {
+    background: white; border-radius: 28px; padding: 40px 32px;
+    width: 100%; max-width: 360px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  #auth-screen .auth-emoji { font-size: 56px; }
+  #auth-screen h2 { font-family: 'Nunito', sans-serif; font-size: 24px; font-weight: 900; margin-top: 12px; color: var(--text-dark); }
+  #auth-screen p { font-size: 14px; color: var(--text-mid); margin-top: 8px; line-height: 1.6; }
+  .btn-google {
+    width: 100%; margin-top: 28px; padding: 16px; border: 2px solid #e0e0e0;
+    border-radius: var(--radius-sm); background: white; font-size: 15px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+    font-family: inherit; transition: all 0.2s; color: var(--text-dark);
+  }
+  .btn-google:hover { background: #f8f8f8; border-color: var(--pink); }
+  .btn-google svg { width: 20px; height: 20px; }
+
+  /* ── MAIN APP ── */
+  #app { display: none; padding-bottom: 80px; }
+
+  /* Header */
+  .app-header {
+    background: linear-gradient(135deg, #FF8FAB 0%, #FFB3C6 60%, #C9B8FF 100%);
+    padding: 48px 20px 24px;
+    position: relative; overflow: hidden;
+  }
+  .app-header::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 150px; height: 150px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+  }
+  .app-header::after {
+    content: ''; position: absolute; bottom: -20px; left: 20px;
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  .baby-info h1 { font-family: 'Nunito', sans-serif; font-size: 24px; font-weight: 900; color: white; }
+  .baby-info p { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+  .header-avatar {
+    width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    border: 2px solid rgba(255,255,255,0.5); cursor: pointer;
+  }
+  .last-feed-card {
+    background: rgba(255,255,255,0.25); backdrop-filter: blur(10px);
+    border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .last-feed-card .lf-label { font-size: 12px; color: rgba(255,255,255,0.8); }
+  .last-feed-card .lf-value { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 800; color: white; }
+  .last-feed-card .lf-sub { font-size: 11px; color: rgba(255,255,255,0.7); }
+
+  /* Quick Actions */
+  .section-title {
+    padding: 20px 20px 12px;
+    font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 800; color: var(--text-dark);
+  }
+  .quick-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; padding: 0 16px;
+  }
+  .quick-btn {
+    background: white; border: none; border-radius: var(--radius);
+    padding: 18px 8px; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    box-shadow: var(--card-shadow);
+    position: relative; overflow: hidden;
+  }
+  .quick-btn::before {
+    content: ''; position: absolute; inset: 0; opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .quick-btn:active { transform: scale(0.94); }
+  .quick-btn .q-emoji { font-size: 32px; }
+  .quick-btn .q-label { font-size: 12px; font-weight: 700; color: var(--text-mid); }
+  .quick-btn.feed { background: linear-gradient(135deg, #FFF0F4, #FFE4EC); }
+  .quick-btn.sleep { background: linear-gradient(135deg, #EBF5FF, #D6EEFF); }
+  .quick-btn.diaper { background: linear-gradient(135deg, #F0FBF6, #D8F5E9); }
+  .quick-btn.bath { background: linear-gradient(135deg, #F3F0FF, #E8E0FF); }
+  .quick-btn.temp { background: linear-gradient(135deg, #FFFBEC, #FFF3CC); }
+  .quick-btn.memo { background: linear-gradient(135deg, #FFF8F0, #FFE8CC); }
+
+  /* Today Summary */
+  .summary-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; padding: 0 16px; margin-top: 4px;
+  }
+  .summary-card {
+    background: white; border-radius: var(--radius-sm);
+    padding: 14px 10px; text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .summary-card .s-num { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; }
+  .summary-card .s-unit { font-size: 11px; color: var(--text-light); }
+  .summary-card .s-label { font-size: 11px; color: var(--text-mid); font-weight: 600; margin-top: 4px; }
+  .summary-card.pink .s-num { color: var(--pink); }
+  .summary-card.blue .s-num { color: var(--blue); }
+  .summary-card.mint .s-num { color: #3DBE8A; }
+
+  /* Timeline */
+  .timeline { padding: 0 16px; }
+  .timeline-item {
+    display: flex; gap: 14px; padding: 12px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    animation: fadeInUp 0.3s ease;
+  }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .tl-icon {
+    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .tl-icon.feed { background: var(--pink-pale); }
+  .tl-icon.sleep { background: var(--blue-pale); }
+  .tl-icon.diaper { background: var(--mint-pale); }
+  .tl-icon.bath { background: var(--purple-pale); }
+  .tl-icon.temp { background: var(--yellow-pale); }
+  .tl-icon.memo { background: #FFF5EE; }
+  .tl-content { flex: 1; }
+  .tl-title { font-size: 14px; font-weight: 700; }
+  .tl-detail { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+  .tl-time { font-size: 11px; color: var(--text-light); white-space: nowrap; margin-top: 2px; }
+  .tl-actions { display: flex; gap: 6px; align-items: flex-start; }
+  .tl-del-btn {
+    background: none; border: none; cursor: pointer; font-size: 14px;
+    color: var(--text-light); padding: 4px; border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .tl-del-btn:hover { background: #ffe0e0; color: #e05555; }
+  .empty-timeline {
+    text-align: center; padding: 40px 20px; color: var(--text-light);
+  }
+  .empty-timeline .et-emoji { font-size: 48px; }
+  .empty-timeline p { margin-top: 12px; font-size: 14px; }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: white; border-top: 1px solid rgba(0,0,0,0.08);
+    display: flex; height: 68px; z-index: 100;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  }
+  .nav-btn {
+    flex: 1; border: none; background: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; transition: all 0.2s; padding: 8px 0;
+  }
+  .nav-btn .nav-icon { font-size: 22px; }
+  .nav-btn .nav-label { font-size: 10px; font-weight: 700; color: var(--text-light); }
+  .nav-btn.active .nav-label { color: var(--pink); }
+  .nav-btn.active .nav-icon { transform: scale(1.15); }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Stats Page */
+  .stats-container { padding: 0 16px 20px; }
+  .chart-card {
+    background: white; border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--card-shadow); margin-bottom: 16px;
+  }
+  .chart-title { font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800; margin-bottom: 16px; color: var(--text-dark); }
+  .bar-chart { display: flex; gap: 8px; align-items: flex-end; height: 120px; }
+  .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar { width: 100%; border-radius: 8px 8px 0 0; min-height: 4px; transition: height 0.5s ease; }
+  .bar.pink { background: linear-gradient(to top, var(--pink), #FFB3C6); }
+  .bar.blue { background: linear-gradient(to top, var(--blue), #B8DCFF); }
+  .bar.mint { background: linear-gradient(to top, var(--mint), #C8F0DC); }
+  .bar.orange { background: linear-gradient(to top, #FFB347, #FFD4A0); }
+  .bar-label { font-size: 10px; color: var(--text-light); }
+  .bar-val { font-size: 10px; font-weight: 700; color: var(--text-mid); }
+  .pie-container { display: flex; align-items: center; gap: 20px; }
+  canvas#pieChart { max-width: 120px; max-height: 120px; }
+  .pie-legend { flex: 1; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Growth Page */
+  .growth-container { padding: 0 16px 20px; }
+  .growth-card {
+    background: white; border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--card-shadow); margin-bottom: 16px;
+  }
+  .growth-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .g-input-group label { font-size: 12px; font-weight: 700; color: var(--text-mid); display: block; margin-bottom: 6px; }
+  .g-input-group input {
+    width: 100%; padding: 12px 14px; border: 2px solid var(--pink-light);
+    border-radius: var(--radius-sm); font-size: 16px; font-family: inherit;
+    background: white; outline: none;
+  }
+  .g-input-group input:focus { border-color: var(--pink); }
+  .btn-save-growth {
+    width: 100%; margin-top: 14px; padding: 14px; background: linear-gradient(135deg, var(--pink), var(--purple));
+    border: none; border-radius: var(--radius-sm); color: white; font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .growth-chart-wrap { margin-top: 16px; }
+  .growth-percentile { 
+    display: flex; justify-content: center; gap: 20px; 
+    flex-wrap: wrap; margin-top: 12px;
+  }
+  .p-badge {
+    background: var(--pink-pale); border-radius: 20px; padding: 6px 14px;
+    font-size: 13px; font-weight: 700; color: var(--pink);
+  }
+  .vaccine-list { margin-top: 12px; }
+  .vaccine-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .vaccine-check {
+    width: 24px; height: 24px; border-radius: 8px; border: 2px solid var(--pink-light);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    flex-shrink: 0; transition: all 0.2s; background: white;
+  }
+  .vaccine-check.done { background: var(--pink); border-color: var(--pink); }
+  .vaccine-check.done::after { content: '✓'; color: white; font-size: 13px; font-weight: 900; }
+  .vaccine-info { flex: 1; }
+  .vaccine-info .v-name { font-size: 14px; font-weight: 700; }
+  .vaccine-info .v-when { font-size: 12px; color: var(--text-mid); }
+  .vaccine-due { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .vaccine-due.soon { background: #FFF3CC; color: #B8860B; }
+  .vaccine-due.done { background: var(--mint-light); color: #2A8055; }
+  .vaccine-due.upcoming { background: var(--blue-pale); color: #2060A0; }
+
+  /* Family Page */
+  .family-container { padding: 0 16px 20px; }
+  .family-card {
+    background: white; border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--card-shadow); margin-bottom: 16px;
+  }
+  .family-card h3 { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+  .invite-box {
+    background: var(--pink-pale); border-radius: var(--radius-sm); padding: 14px;
+    font-size: 13px; color: var(--text-mid); word-break: break-all;
+    border: 1px dashed var(--pink); margin-bottom: 12px;
+    font-family: monospace;
+  }
+  .btn-share {
+    width: 100%; padding: 14px; background: var(--pink); border: none;
+    border-radius: var(--radius-sm); color: white; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit; display: flex; align-items: center;
+    justify-content: center; gap: 8px; transition: all 0.2s;
+  }
+  .btn-share:active { transform: scale(0.97); }
+  .member-list { }
+  .member-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .member-avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--pink-light);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    flex-shrink: 0;
+  }
+  .member-info .m-name { font-size: 14px; font-weight: 700; }
+  .member-info .m-role { font-size: 12px; color: var(--text-mid); }
+  .role-badge {
+    margin-left: auto; font-size: 11px; font-weight: 700; padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .role-badge.admin { background: var(--pink-pale); color: var(--pink); }
+  .role-badge.viewer { background: var(--mint-pale); color: #2A8055; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-sheet {
+    background: white; border-radius: 28px 28px 0 0;
+    width: 100%; max-width: 430px; padding: 0 0 40px;
+    animation: slideUp 0.3s ease;
+    max-height: 90vh; overflow-y: auto;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 12px auto 0; }
+  .modal-title { font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; padding: 20px 24px 0; }
+  .modal-body { padding: 20px 24px; }
+  .modal-row { margin-bottom: 16px; }
+  .modal-row label { display: block; font-size: 12px; font-weight: 700; color: var(--text-mid); margin-bottom: 8px; text-transform: uppercase; }
+  .modal-row input, .modal-row select, .modal-row textarea {
+    width: 100%; padding: 14px; border: 2px solid #eee; border-radius: var(--radius-sm);
+    font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.2s;
+  }
+  .modal-row input:focus, .modal-row select:focus, .modal-row textarea:focus { border-color: var(--pink); }
+  .modal-row textarea { min-height: 80px; resize: none; }
+  .type-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .type-pill {
+    padding: 8px 16px; border: 2px solid #eee; border-radius: 20px;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    background: white; color: var(--text-mid);
+  }
+  .type-pill.active { border-color: var(--pink); background: var(--pink-pale); color: var(--pink); }
+  .timer-display {
+    text-align: center; padding: 20px 0;
+  }
+  .timer-display .timer-num {
+    font-family: 'Nunito', sans-serif; font-size: 56px; font-weight: 900; color: var(--text-dark);
+  }
+  .timer-display .timer-label { font-size: 13px; color: var(--text-mid); margin-top: 4px; }
+  .btn-timer {
+    padding: 16px 32px; border: none; border-radius: var(--radius); font-size: 17px;
+    font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: all 0.2s; margin: 0 auto; display: block;
+  }
+  .btn-timer.start { background: linear-gradient(135deg, var(--blue), #6BA8F5); color: white; }
+  .btn-timer.stop { background: linear-gradient(135deg, var(--pink), #FF6B9D); color: white; }
+  .btn-save {
+    width: 100%; padding: 16px; background: linear-gradient(135deg, var(--pink), var(--purple));
+    border: none; border-radius: var(--radius-sm); color: white; font-size: 16px;
+    font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; margin-top: 8px;
+  }
+  .btn-cancel {
+    width: 100%; padding: 14px; background: none; border: 2px solid #eee;
+    border-radius: var(--radius-sm); color: var(--text-mid); font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px;
+  }
+
+  /* Sleep Active Indicator */
+  .sleep-active-bar {
+    display: none; background: linear-gradient(135deg, var(--blue-pale), #D6EEFF);
+    margin: 12px 16px; border-radius: var(--radius-sm); padding: 12px 16px;
+    border: 1px solid var(--blue); align-items: center; gap: 12px;
+  }
+  .sleep-active-bar.show { display: flex; }
+  .sleep-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+  .sleep-active-text { flex: 1; font-size: 13px; font-weight: 700; color: #2060A0; }
+  .btn-stop-sleep {
+    padding: 8px 14px; background: var(--blue); border: none; border-radius: 10px;
+    color: white; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(45,45,45,0.92); color: white; padding: 12px 24px;
+    border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 1000;
+    opacity: 0; transition: all 0.3s; white-space: nowrap;
+    backdrop-filter: blur(10px);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── ANALYSIS FEEDBACK ── */
+  .feedback-card {
+    margin: 8px 16px 0;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--card-shadow);
+    animation: fadeInUp 0.4s ease;
+  }
+  .feedback-card.good { background: linear-gradient(135deg, #F0FBF6, #D8F5E9); border-left: 4px solid #3DBE8A; }
+  .feedback-card.warn { background: linear-gradient(135deg, #FFFBEC, #FFF3CC); border-left: 4px solid #FFD93D; }
+  .feedback-card.info { background: linear-gradient(135deg, #EBF5FF, #D6EEFF); border-left: 4px solid var(--blue); }
+  .feedback-title { font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+  .feedback-card.good .feedback-title { color: #2A8055; }
+  .feedback-card.warn .feedback-title { color: #B8860B; }
+  .feedback-card.info .feedback-title { color: #2060A0; }
+  .feedback-rows { display: flex; flex-direction: column; gap: 5px; }
+  .feedback-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .feedback-row .fb-label { color: var(--text-mid); min-width: 60px; }
+  .feedback-row .fb-value { font-weight: 700; }
+  .feedback-row .fb-status { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; }
+  .fb-status.ok { background: var(--mint-light); color: #2A8055; }
+  .fb-status.low { background: #FFF3CC; color: #B8860B; }
+  .fb-status.high { background: #FFE0E0; color: #CC3333; }
+  .insight-box {
+    margin: 8px 16px 0;
+    background: linear-gradient(135deg, var(--pink-pale), var(--purple-pale));
+    border-radius: var(--radius); padding: 14px 18px;
+    box-shadow: var(--card-shadow);
+  }
+  .insight-box .insight-title { font-size: 13px; font-weight: 800; color: var(--pink); margin-bottom: 8px; }
+  .insight-item { font-size: 13px; color: var(--text-mid); padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .insight-item:last-child { border-bottom: none; }
+  .insight-item strong { color: var(--text-dark); }
+
+  /* ── FOOD PAGE ── */
+  .food-container { padding: 0 16px 20px; }
+  .food-card {
+    background: white; border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--card-shadow); margin-bottom: 16px;
+  }
+  .food-card h3 { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+  .food-search-wrap { position: relative; margin-bottom: 14px; }
+  .food-search-wrap input {
+    width: 100%; padding: 12px 16px 12px 42px; border: 2px solid var(--pink-light);
+    border-radius: var(--radius-sm); font-size: 15px; font-family: inherit; outline: none;
+    background: white; transition: border-color 0.2s;
+  }
+  .food-search-wrap input:focus { border-color: var(--pink); }
+  .food-search-wrap .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+  .food-search-results {
+    background: white; border: 2px solid var(--pink-light); border-radius: var(--radius-sm);
+    max-height: 200px; overflow-y: auto; display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .food-search-results.show { display: block; }
+  .food-result-item {
+    padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f5f5f5;
+    display: flex; align-items: center; gap: 10px; font-size: 14px;
+    transition: background 0.15s;
+  }
+  .food-result-item:hover { background: var(--pink-pale); }
+  .food-result-item .f-emoji { font-size: 20px; }
+  .food-result-item .f-name { font-weight: 600; }
+  .food-result-item .f-cat { font-size: 11px; color: var(--text-light); }
+  .category-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cat-pill {
+    padding: 6px 14px; border: 2px solid #eee; border-radius: 20px;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    background: white; color: var(--text-mid);
+  }
+  .cat-pill.active { border-color: var(--pink); background: var(--pink-pale); color: var(--pink); }
+  .food-log-form { display: flex; flex-direction: column; gap: 12px; }
+  .food-reaction-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .reaction-pill {
+    padding: 8px 14px; border: 2px solid #eee; border-radius: 20px;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    background: white;
+  }
+  .reaction-pill.active.good { border-color: #3DBE8A; background: var(--mint-pale); color: #2A8055; }
+  .reaction-pill.active.warn { border-color: #FFD93D; background: var(--yellow-pale); color: #B8860B; }
+  .reaction-pill.active.bad { border-color: #FF6B6B; background: #FFF0F0; color: #CC3333; }
+  .reaction-pill.active.reject { border-color: var(--text-light); background: #f5f5f5; color: var(--text-mid); }
+  .btn-add-food {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, #FFB347, #FF8FAB);
+    border: none; border-radius: var(--radius-sm); color: white; font-size: 15px;
+    font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; margin-top: 4px;
+  }
+  .food-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid var(--pink-light); }
+  .food-tab {
+    flex: 1; padding: 10px; border: none; background: white; font-size: 12px;
+    font-weight: 700; cursor: pointer; transition: all 0.2s; color: var(--text-mid);
+    font-family: inherit;
+  }
+  .food-tab.active { background: var(--pink); color: white; }
+  .food-item-list { display: flex; flex-direction: column; gap: 10px; }
+  .food-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    background: var(--bg); border-radius: var(--radius-sm);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .food-item .fi-emoji { font-size: 24px; flex-shrink: 0; }
+  .food-item .fi-info { flex: 1; }
+  .food-item .fi-name { font-size: 14px; font-weight: 700; }
+  .food-item .fi-detail { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+  .food-item .fi-date { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .food-item .fi-badge {
+    font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; flex-shrink: 0;
+  }
+  .fi-badge.good { background: var(--mint-light); color: #2A8055; }
+  .fi-badge.warn { background: var(--yellow-pale); color: #B8860B; }
+  .fi-badge.bad { background: #FFE0E0; color: #CC3333; }
+  .fi-badge.reject { background: #f0f0f0; color: var(--text-mid); }
+  .fi-badge.todo { background: var(--blue-pale); color: #2060A0; }
+  .food-del-btn {
+    background: none; border: none; cursor: pointer; font-size: 14px;
+    color: var(--text-light); padding: 4px; border-radius: 8px; flex-shrink: 0;
+  }
+  .food-edit-btn {
+    background: none; border: none; cursor: pointer; font-size: 16px;
+    padding: 4px; border-radius: 8px; flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .food-edit-btn:active { transform: scale(0.9); }
+  .empty-food { text-align: center; padding: 30px 20px; color: var(--text-light); font-size: 14px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--pink-light); border-radius: 2px; }
+
+  /* Sleep timer in modal */
+  .sleep-timer-wrap { text-align: center; padding: 8px 0 16px; }
+
+  /* Loading */
+  .loading-spinner {
+    width: 24px; height: 24px; border: 3px solid var(--pink-light);
+    border-top-color: var(--pink); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 20px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="logo">🍼</div>
+  <h1>아기일기</h1>
+  <p>소중한 순간을 기록해요</p>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-emoji">👶</div>
+    <h2>아기일기에 오신 것을<br>환영해요!</h2>
+    <p>Google 계정으로 로그인하면<br>가족과 함께 기록을 공유할 수 있어요</p>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Google로 시작하기
+    </button>
+    <button class="btn-cancel" style="margin-top:12px;" onclick="skipAuth()">나중에 로그인하기</button>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="onboard-header">
+    <div class="emoji">👶</div>
+    <h2>아기 정보를 알려주세요</h2>
+    <p>성장 차트와 발달 체크리스트에 사용돼요</p>
+  </div>
+  <div class="onboard-body">
+    <div class="form-group">
+      <label>아기 이름 (닉네임도 OK)</label>
+      <input type="text" id="ob-name" placeholder="예: 하늘이, 우리 아기" maxlength="20">
+    </div>
+    <div class="form-group">
+      <label>생년월일</label>
+      <input type="date" id="ob-birth" max="">
+    </div>
+    <div class="form-group">
+      <label>성별</label>
+      <div class="gender-row">
+        <button class="gender-btn" id="btn-boy" onclick="selectGender('boy')">
+          👦 <span>남아</span>
+        </button>
+        <button class="gender-btn" id="btn-girl" onclick="selectGender('girl')">
+          👧 <span>여아</span>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>출생 시 몸무게</label>
+      <input type="number" id="ob-birth-weight" placeholder="예: 3.2" step="0.01" min="0.5" max="6"> <span style="font-size:13px;color:var(--text-mid);">kg</span>
+    </div>
+    <div class="form-group">
+      <label>출생 시 키</label>
+      <input type="number" id="ob-birth-height" placeholder="예: 50" step="0.1" min="30" max="70"> <span style="font-size:13px;color:var(--text-mid);">cm</span>
+    </div>
+    <div class="form-group">
+      <label>조산아 여부</label>
+      <div class="preterm-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="ob-preterm" onchange="togglePreterm()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span style="font-size:14px;color:var(--text-mid);">예정일보다 일찍 태어났어요</span>
+      </div>
+    </div>
+    <div class="form-group" id="due-date-group" style="display:none;">
+      <label>예정일 (원래 출산 예정일)</label>
+      <input type="date" id="ob-due-date">
+    </div>
+    <button class="btn-primary" onclick="saveOnboarding()">🍼 시작하기!</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- HOME PAGE -->
+  <div class="page active" id="page-home">
+    <div class="app-header">
+      <div class="header-top">
+        <div class="baby-info">
+          <h1 id="header-baby-name">아기일기 🍼</h1>
+          <p id="header-baby-age">태어난 지 0일째</p>
+        </div>
+        <div class="header-avatar" onclick="goToFamily()">👨‍👩‍👧</div>
+      </div>
+      <div class="last-feed-card">
+        <div>
+          <div class="lf-label">마지막 수유</div>
+          <div class="lf-value" id="last-feed-time">-</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="lf-label">다음 수유까지</div>
+          <div class="lf-value" id="next-feed-time">-</div>
+          <div class="lf-sub">약 3시간 간격 기준</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sleep-active-bar" id="sleep-active-bar">
+      <div class="sleep-dot"></div>
+      <div class="sleep-active-text">💤 수면 중... <span id="sleep-elapsed">00:00</span></div>
+      <button class="btn-stop-sleep" onclick="stopSleep()">일어났어요</button>
+    </div>
+
+    <div class="section-title">오늘의 기록</div>
+    <div class="summary-row">
+      <div class="summary-card pink">
+        <div class="s-num" id="sum-feed">0</div>
+        <div class="s-unit">회</div>
+        <div class="s-label">🍼 수유</div>
+      </div>
+      <div class="summary-card blue">
+        <div class="s-num" id="sum-sleep">0</div>
+        <div class="s-unit">시간</div>
+        <div class="s-label">😴 수면</div>
+      </div>
+      <div class="summary-card mint">
+        <div class="s-num" id="sum-diaper">0</div>
+        <div class="s-unit">회</div>
+        <div class="s-label">💧 기저귀</div>
+      </div>
+    </div>
+    <div class="summary-row" style="margin-top:8px;">
+      <div class="summary-card" style="background:linear-gradient(135deg,#FFF8F0,#FFE8CC);">
+        <div class="s-num" style="color:#FFB347;" id="sum-food">0</div>
+        <div class="s-unit">회</div>
+        <div class="s-label">🥣 이유식</div>
+      </div>
+      <div class="summary-card" style="background:linear-gradient(135deg,#FFF0F4,#FFE4EC);">
+        <div class="s-num" style="color:#FF8FAB;" id="sum-temp">-</div>
+        <div class="s-unit">°C</div>
+        <div class="s-label">🌡️ 체온</div>
+      </div>
+      <div class="summary-card" style="background:linear-gradient(135deg,#F3F0FF,#E8E0FF);">
+        <div class="s-num" style="color:#C9B8FF;" id="sum-bath">0</div>
+        <div class="s-unit">회</div>
+        <div class="s-label">🛁 목욕</div>
+      </div>
+    </div>
+
+    <!-- ANALYSIS FEEDBACK -->
+    <div id="feedback-section"></div>
+
+    <div class="section-title" style="margin-top:8px;">빠른 기록</div>
+    <div class="quick-grid">
+      <button class="quick-btn feed" onclick="openModal('feed')">
+        <span class="q-emoji">🍼</span>
+        <span class="q-label">수유</span>
+      </button>
+      <button class="quick-btn sleep" onclick="openModal('sleep')">
+        <span class="q-emoji">😴</span>
+        <span class="q-label">수면</span>
+      </button>
+      <button class="quick-btn diaper" onclick="openModal('diaper')">
+        <span class="q-emoji">💧</span>
+        <span class="q-label">기저귀</span>
+      </button>
+      <button class="quick-btn" style="background:linear-gradient(135deg,#FFF8F0,#FFE8CC);" onclick="switchPage('food', document.querySelectorAll('.nav-btn')[2])">
+        <span class="q-emoji">🥣</span>
+        <span class="q-label">이유식</span>
+      </button>
+      <button class="quick-btn temp" onclick="openModal('temp')">
+        <span class="q-emoji">🌡️</span>
+        <span class="q-label">체온</span>
+      </button>
+      <button class="quick-btn bath" onclick="openModal('bath')">
+        <span class="q-emoji">🛁</span>
+        <span class="q-label">목욕</span>
+      </button>
+    </div>
+    <div style="margin:0 16px 4px;">
+      <button class="quick-btn memo" style="width:100%;flex-direction:row;gap:8px;padding:12px 16px;justify-content:flex-start;" onclick="openModal('memo')">
+        <span style="font-size:20px;">📝</span>
+        <span class="q-label" style="font-size:13px;">메모 남기기</span>
+      </button>
+    </div>
+
+    <div class="section-title" style="margin-top:8px;">오늘의 타임라인</div>
+    <div class="timeline" id="timeline-list">
+      <div class="empty-timeline">
+        <div class="et-emoji">🌙</div>
+        <p>아직 오늘 기록이 없어요<br>위에서 기록을 시작해보세요!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS PAGE -->
+  <div class="page" id="page-stats">
+    <div class="app-header" style="padding-bottom:20px;">
+      <h1 style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:white;">📊 통계</h1>
+      <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">최근 7일 기록 분석</p>
+    </div>
+    <div class="stats-container" style="margin-top:20px;">
+      <div class="chart-card">
+        <div class="chart-title">🍼 일일 수유 횟수 (7일)</div>
+        <div class="bar-chart" id="feed-bar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">😴 일일 수면 시간 (7일)</div>
+        <div class="bar-chart" id="sleep-bar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🥣 일일 이유식 횟수 (7일)</div>
+        <div class="bar-chart" id="food-bar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">💧 일일 기저귀 횟수 (7일)</div>
+        <div class="bar-chart" id="diaper-bar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">오늘 하루 기록 분포</div>
+        <div class="pie-container">
+          <canvas id="pieChart" width="120" height="120"></canvas>
+          <div class="pie-legend" id="pie-legend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROWTH PAGE -->
+  <div class="page" id="page-growth">
+    <div class="app-header" style="padding-bottom:20px;">
+      <h1 style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:white;">📏 성장 기록</h1>
+      <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">WHO 2006 성장 기준 (캐나다 공식)</p>
+    </div>
+    <div class="growth-container" style="margin-top:20px;">
+      <div class="growth-card">
+        <div class="chart-title">오늘 측정값 입력</div>
+        <div class="growth-inputs">
+          <div class="g-input-group">
+            <label>몸무게 (kg)</label>
+            <input type="number" id="g-weight" placeholder="예: 5.2" step="0.01" min="1" max="30">
+          </div>
+          <div class="g-input-group">
+            <label>키 (cm)</label>
+            <input type="number" id="g-height" placeholder="예: 58" step="0.1" min="30" max="130">
+          </div>
+        </div>
+        <div class="growth-inputs" style="margin-top:0;">
+          <div class="g-input-group">
+            <label>머리둘레 (cm)</label>
+            <input type="number" id="g-head" placeholder="예: 38" step="0.1" min="20" max="60">
+          </div>
+          <div class="g-input-group">
+            <label>측정 날짜</label>
+            <input type="date" id="g-date">
+          </div>
+        </div>
+        <button class="btn-save-growth" onclick="saveGrowth()">저장하기</button>
+      </div>
+      <div class="growth-card">
+        <div class="chart-title">📈 성장 추이</div>
+        <canvas id="growthChart" height="200"></canvas>
+        <div class="growth-percentile" id="growth-percentile"></div>
+      </div>
+      <div class="growth-card">
+        <div class="chart-title">💉 예방접종 체크리스트</div>
+        <div class="vaccine-list" id="vaccine-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAMILY PAGE -->
+  <div class="page" id="page-family">
+    <div class="app-header" style="padding-bottom:20px;">
+      <h1 style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:white;">👨‍👩‍👧 가족 공유</h1>
+      <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">함께 기록해요</p>
+    </div>
+    <div class="family-container" style="margin-top:20px;">
+      <div class="family-card">
+        <h3>📎 초대 링크</h3>
+        <div class="invite-box" id="invite-link">로그인 후 초대 링크가 생성됩니다</div>
+        <button class="btn-share" onclick="shareLink()">
+          📤 카카오톡으로 공유하기
+        </button>
+      </div>
+      <div class="family-card">
+        <h3>👥 가족 구성원</h3>
+        <div class="member-list" id="member-list">
+          <div class="member-item">
+            <div class="member-avatar">👤</div>
+            <div class="member-info">
+              <div class="m-name" id="my-member-name">나</div>
+              <div class="m-role">아기 등록자</div>
+            </div>
+            <span class="role-badge admin">관리자</span>
+          </div>
+        </div>
+      </div>
+      <div class="family-card">
+        <h3>📋 최근 48시간 공동 기록</h3>
+        <div id="shared-feed">
+          <div style="text-align:center;padding:20px;color:var(--text-light);font-size:14px;">로그인 후 가족의 기록을 확인할 수 있어요</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOD PAGE -->
+  <div class="page" id="page-food">
+    <div class="app-header" style="padding-bottom:20px;">
+      <h1 style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:white;">🥣 이유식 기록</h1>
+      <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">먹은 음식, 반응, 계획을 관리해요</p>
+    </div>
+    <div class="food-container" style="margin-top:20px;">
+
+      <!-- 음식 추가 카드 -->
+      <div class="food-card">
+        <h3>🍽️ 음식 기록 추가</h3>
+
+        <!-- 카테고리 필터 -->
+        <div class="category-pills">
+          <button class="cat-pill active" onclick="selectFoodCat(this,'전체')">전체</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'채소')">🥦 채소</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'과일')">🍎 과일</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'곡류')">🌾 곡류</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'단백질')">🥚 단백질</button>
+          <button class="cat-pill" onclick="selectFoodCat(this,'유제품')">🥛 유제품</button>
+        </div>
+
+        <!-- 음식 검색 -->
+        <div class="food-search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="food-search-input" placeholder="음식 이름 검색 또는 직접 입력" oninput="searchFood(this.value)" autocomplete="off">
+          <div class="food-search-results" id="food-search-results"></div>
+        </div>
+
+        <div class="food-log-form">
+          <!-- 선택된 음식 -->
+          <div style="padding:12px;background:var(--pink-pale);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--pink);min-height:44px;display:flex;align-items:center;">
+            <span id="selected-food-display">👆 위에서 음식을 검색하거나 직접 입력하세요</span>
+          </div>
+
+          <!-- 날짜 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:6px;">날짜</label>
+            <input type="date" id="food-date" style="width:100%;padding:12px 14px;border:2px solid var(--pink-light);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;outline:none;">
+          </div>
+
+          <!-- 양 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:6px;">먹은 양 (선택)</label>
+            <input type="text" id="food-amount" placeholder="예: 2스푼, 반 공기" style="width:100%;padding:12px 14px;border:2px solid var(--pink-light);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;outline:none;">
+          </div>
+
+          <!-- 반응 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:8px;">아기 반응</label>
+            <div class="food-reaction-pills">
+              <button class="reaction-pill active good" onclick="selectReaction(this,'잘먹음')">😋 잘 먹음</button>
+              <button class="reaction-pill warn" onclick="selectReaction(this,'보통')">😐 보통</button>
+              <button class="reaction-pill bad" onclick="selectReaction(this,'알레르기')">⚠️ 알레르기</button>
+              <button class="reaction-pill reject" onclick="selectReaction(this,'거부')">🙅 거부</button>
+            </div>
+          </div>
+
+          <!-- 상태 (먹었는지 / 예정인지) -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:8px;">상태</label>
+            <div class="food-reaction-pills">
+              <button class="reaction-pill active good" id="status-ate" onclick="selectStatus('ate')">✅ 먹었어요</button>
+              <button class="reaction-pill" id="status-todo" onclick="selectStatus('todo')" style="border-color:#93C6F5;color:#2060A0;">📋 먹일 예정</button>
+            </div>
+          </div>
+
+          <!-- 메모 -->
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-mid);display:block;margin-bottom:6px;">메모 (선택)</label>
+            <textarea id="food-memo" placeholder="반응 상세, 조리법 등" style="width:100%;padding:12px 14px;border:2px solid var(--pink-light);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none;min-height:70px;resize:none;"></textarea>
+          </div>
+
+          <button class="btn-add-food" onclick="saveFoodRecord()">🥣 저장하기</button>
+        </div>
+      </div>
+
+      <!-- 음식 목록 -->
+      <div class="food-card">
+        <h3>📋 이유식 기록 목록</h3>
+        <div class="food-tabs">
+          <button class="food-tab active" onclick="switchFoodTab(this,'all')">전체</button>
+          <button class="food-tab" onclick="switchFoodTab(this,'ate')">먹은 음식</button>
+          <button class="food-tab" onclick="switchFoodTab(this,'todo')">먹일 예정</button>
+          <button class="food-tab" onclick="switchFoodTab(this,'reject')">거부/알레르기</button>
+        </div>
+        <div class="food-item-list" id="food-item-list">
+          <div class="empty-food">🥣 아직 기록이 없어요<br>위에서 추가해보세요!</div>
+        </div>
+      </div>
+
+      <!-- 통계 요약 -->
+      <div class="food-card">
+        <h3>📊 이유식 현황</h3>
+        <div class="summary-row" style="padding:0;margin:0;">
+          <div class="summary-card pink">
+            <div class="s-num" id="food-ate-count">0</div>
+            <div class="s-unit">가지</div>
+            <div class="s-label">먹은 음식</div>
+          </div>
+          <div class="summary-card blue">
+            <div class="s-num" id="food-todo-count">0</div>
+            <div class="s-unit">가지</div>
+            <div class="s-label">먹일 예정</div>
+          </div>
+          <div class="summary-card" style="background:white;">
+            <div class="s-num" style="color:#CC3333;" id="food-alert-count">0</div>
+            <div class="s-unit">가지</div>
+            <div class="s-label">주의 음식</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none;">
+  <button class="nav-btn active" onclick="switchPage('home', this)">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">홈</span>
+  </button>
+  <button class="nav-btn" onclick="switchPage('stats', this)">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">통계</span>
+  </button>
+  <button class="nav-btn" onclick="switchPage('food', this)">
+    <span class="nav-icon">🥣</span>
+    <span class="nav-label">이유식</span>
+  </button>
+  <button class="nav-btn" onclick="switchPage('growth', this)">
+    <span class="nav-icon">📏</span>
+    <span class="nav-label">성장</span>
+  </button>
+  <button class="nav-btn" onclick="switchPage('family', this)">
+    <span class="nav-icon">👨‍👩‍👧</span>
+    <span class="nav-label">가족</span>
+  </button>
+</nav>
+
+<!-- MODALS -->
+<!-- Feed Modal -->
+<div class="modal-overlay" id="modal-feed" onclick="closeModalOutside(event,'modal-feed')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🍼 수유 기록</div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label>수유 유형</label>
+        <div class="type-pills">
+          <button class="type-pill active" onclick="selectPill(this,'feed-type')">모유 (왼쪽)</button>
+          <button class="type-pill" onclick="selectPill(this,'feed-type')">모유 (오른쪽)</button>
+          <button class="type-pill" onclick="selectPill(this,'feed-type')">분유</button>
+          <button class="type-pill" onclick="selectPill(this,'feed-type')">이유식</button>
+          <button class="type-pill" onclick="selectPill(this,'feed-type')">혼합</button>
+        </div>
+      </div>
+      <div class="modal-row">
+        <label>양 / 시간</label>
+        <input type="number" id="feed-amount" placeholder="ml 또는 분 (선택사항)">
+      </div>
+      <div class="modal-row">
+        <label>시작 시간</label>
+        <input type="datetime-local" id="feed-time">
+      </div>
+      <div class="modal-row">
+        <label>메모</label>
+        <textarea id="feed-memo" placeholder="특이사항을 적어요 (선택사항)"></textarea>
+      </div>
+      <button class="btn-save" onclick="saveRecord('feed')">저장하기</button>
+      <button class="btn-cancel" onclick="closeModal('modal-feed')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sleep Modal -->
+<div class="modal-overlay" id="modal-sleep" onclick="closeModalOutside(event,'modal-sleep')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">😴 수면 기록</div>
+    <div class="modal-body">
+      <div class="sleep-timer-wrap">
+        <div class="timer-display">
+          <div class="timer-num" id="sleep-timer-display">00:00:00</div>
+          <div class="timer-label" id="sleep-timer-label">수면 타이머</div>
+        </div>
+        <button class="btn-timer start" id="sleep-timer-btn" onclick="toggleSleepTimer()">▶ 재우기 시작</button>
+      </div>
+      <div class="modal-row" style="margin-top:16px;">
+        <label>또는 직접 입력</label>
+      </div>
+      <div class="modal-row">
+        <label>수면 시작</label>
+        <input type="datetime-local" id="sleep-start">
+      </div>
+      <div class="modal-row">
+        <label>수면 종료</label>
+        <input type="datetime-local" id="sleep-end">
+      </div>
+      <div class="modal-row">
+        <label>메모</label>
+        <textarea id="sleep-memo" placeholder="수면 환경, 특이사항 등"></textarea>
+      </div>
+      <button class="btn-save" onclick="saveRecord('sleep')">저장하기</button>
+      <button class="btn-cancel" onclick="closeModal('modal-sleep')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Diaper Modal -->
+<div class="modal-overlay" id="modal-diaper" onclick="closeModalOutside(event,'modal-diaper')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💧 기저귀 기록</div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label>종류</label>
+        <div class="type-pills">
+          <button class="type-pill active" onclick="selectPill(this,'diaper-type')">💧 소변</button>
+          <button class="type-pill" onclick="selectPill(this,'diaper-type')">💩 대변</button>
+          <button class="type-pill" onclick="selectPill(this,'diaper-type')">💧💩 둘 다</button>
+        </div>
+      </div>
+      <div class="modal-row">
+        <label>시간</label>
+        <input type="datetime-local" id="diaper-time">
+      </div>
+      <div class="modal-row">
+        <label>색상/상태 메모 (선택사항)</label>
+        <textarea id="diaper-memo" placeholder="색상, 묽기 등 특이사항"></textarea>
+      </div>
+      <button class="btn-save" onclick="saveRecord('diaper')">저장하기</button>
+      <button class="btn-cancel" onclick="closeModal('modal-diaper')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bath Modal -->
+<div class="modal-overlay" id="modal-bath" onclick="closeModalOutside(event,'modal-bath')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🛁 목욕 기록</div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label>시간</label>
+        <input type="datetime-local" id="bath-time">
+      </div>
+      <div class="modal-row">
+        <label>메모</label>
+        <textarea id="bath-memo" placeholder="반응, 특이사항 등"></textarea>
+      </div>
+      <button class="btn-save" onclick="saveRecord('bath')">저장하기</button>
+      <button class="btn-cancel" onclick="closeModal('modal-bath')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Temp Modal -->
+<div class="modal-overlay" id="modal-temp" onclick="closeModalOutside(event,'modal-temp')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🌡️ 체온 기록</div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label>체온 (°C)</label>
+        <input type="number" id="temp-value" placeholder="예: 37.2" step="0.1" min="34" max="42">
+      </div>
+      <div class="modal-row">
+        <label>측정 방법</label>
+        <div class="type-pills">
+          <button class="type-pill active" onclick="selectPill(this,'temp-method')">귀</button>
+          <button class="type-pill" onclick="selectPill(this,'temp-method')">겨드랑이</button>
+          <button class="type-pill" onclick="selectPill(this,'temp-method')">직장</button>
+          <button class="type-pill" onclick="selectPill(this,'temp-method')">이마</button>
+        </div>
+      </div>
+      <div class="modal-row">
+        <label>시간</label>
+        <input type="datetime-local" id="temp-time">
+      </div>
+      <div class="modal-row">
+        <label>메모</label>
+        <textarea id="temp-memo" placeholder="증상, 처치 등"></textarea>
+      </div>
+      <button class="btn-save" onclick="saveRecord('temp')">저장하기</button>
+      <button class="btn-cancel" onclick="closeModal('modal-temp')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Memo Modal -->
+<div class="modal-overlay" id="modal-memo" onclick="closeModalOutside(event,'modal-memo')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📝 메모</div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label>시간</label>
+        <input type="datetime-local" id="memo-time">
+      </div>
+      <div class="modal-row">
+        <label>내용</label>
+        <textarea id="memo-content" placeholder="자유롭게 기록해요" style="min-height:120px;"></textarea>
+      </div>
+      <button class="btn-save" onclick="saveRecord('memo')">저장하기</button>
+      <button class="btn-cancel" onclick="closeModal('modal-memo')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, onSnapshot, setDoc, getDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+// ── YOUR FIREBASE CONFIG ──
+const firebaseConfig = {
+  apiKey: "AIzaSyBC5y1B592zfv2ROD7HifmdujH-SUkJSFk",
+  authDomain: "baby-diary-9f808.firebaseapp.com",
+  projectId: "baby-diary-9f808",
+  storageBucket: "baby-diary-9f808.firebasestorage.app",
+  messagingSenderId: "1037211823707",
+  appId: "1:1037211823707:web:a4e974c58d9df3c92c597e",
+  measurementId: "G-WMFZ9K4Z0Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// 오프라인 지원
+try {
+  enableIndexedDbPersistence(db);
+} catch(e) {}
+
+// ── STATE ──
+let currentUser = null;
+let babyInfo = null;
+let records = [];
+let sleepTimerInterval = null;
+let sleepStartTime = null;
+let isSleeping = false;
+let unsubscribeRecords = null;
+
+// ── GLOBAL EXPORTS ──
+window.signInWithGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) { showToast('로그인 실패: ' + e.message); }
+};
+
+window.skipAuth = () => {
+  document.getElementById('auth-screen').style.display = 'none';
+  checkOnboarding();
+};
+
+window.signOut = () => signOut(auth);
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('my-member-name').textContent = user.displayName || user.email || '나';
+    checkOnboarding();
+  }
+});
+
+// ── ONBOARDING ──
+function checkOnboarding() {
+  const saved = localStorage.getItem('babyInfo');
+  if (saved) {
+    babyInfo = JSON.parse(saved);
+    showApp();
+  } else {
+    document.getElementById('onboarding').style.display = 'block';
+    const today = getLocalDateStr();
+    document.getElementById('ob-birth').max = today;
+  }
+}
+
+window.selectGender = (g) => {
+  document.getElementById('btn-boy').classList.toggle('selected', g === 'boy');
+  document.getElementById('btn-girl').classList.toggle('selected', g === 'girl');
+};
+
+window.togglePreterm = () => {
+  const checked = document.getElementById('ob-preterm').checked;
+  document.getElementById('due-date-group').style.display = checked ? 'block' : 'none';
+};
+
+window.saveOnboarding = () => {
+  const name = document.getElementById('ob-name').value.trim();
+  const birth = document.getElementById('ob-birth').value;
+  const gender = document.getElementById('btn-boy').classList.contains('selected') ? 'boy' :
+                 document.getElementById('btn-girl').classList.contains('selected') ? 'girl' : null;
+  if (!name) { showToast('아기 이름을 입력해주세요'); return; }
+  if (!birth) { showToast('생년월일을 선택해주세요'); return; }
+  if (!gender) { showToast('성별을 선택해주세요'); return; }
+  babyInfo = {
+    name, birth, gender,
+    birthWeight: document.getElementById('ob-birth-weight').value || null,
+    birthHeight: document.getElementById('ob-birth-height').value || null,
+    preterm: document.getElementById('ob-preterm').checked,
+    dueDate: document.getElementById('ob-due-date').value || null,
+    createdAt: new Date().toISOString()
+  };
+  localStorage.setItem('babyInfo', JSON.stringify(babyInfo));
+  if (currentUser) saveBabyInfoToFirestore();
+  document.getElementById('onboarding').style.display = 'none';
+  showApp();
+};
+
+async function saveBabyInfoToFirestore() {
+  if (!currentUser || !babyInfo) return;
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid, 'baby', 'info'), babyInfo);
+  } catch(e) {}
+}
+
+// ── SHOW APP ──
+function showApp() {
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('bottom-nav').style.display = 'flex';
+  updateHeader();
+  setDefaultTimes();
+  loadRecords();
+  loadFoodRecordsOnStart(); // 이유식도 앱 시작시 로드
+  renderVaccineList();
+  generateInviteLink();
+}
+
+function updateHeader() {
+  if (!babyInfo) return;
+  document.getElementById('header-baby-name').textContent = babyInfo.name + ' 🍼';
+  const ageText = getAgeText(babyInfo.birth, babyInfo.preterm, babyInfo.dueDate);
+  document.getElementById('header-baby-age').textContent = ageText;
+}
+
+function getAgeText(birthStr, preterm, dueDate) {
+  const birth = new Date(birthStr);
+  const now = new Date();
+  const diffDays = Math.floor((now - birth) / (1000*60*60*24));
+  if (diffDays < 30) return `태어난 지 ${diffDays}일째 💕`;
+  const months = Math.floor(diffDays / 30);
+  const days = diffDays % 30;
+  let txt = `${months}개월 ${days}일`;
+  if (preterm && dueDate) {
+    const due = new Date(dueDate);
+    const correctedDays = Math.floor((now - due) / (1000*60*60*24));
+    if (correctedDays > 0) {
+      const cm = Math.floor(correctedDays / 30);
+      txt += ` (수정연령 ${cm}개월)`;
+    }
+  }
+  return txt + ' 💕';
+}
+
+function setDefaultTimes() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+  ['feed-time','diaper-time','bath-time','temp-time','memo-time','sleep-start','sleep-end','g-date'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = local;
+  });
+}
+
+// ── RECORDS ──
+function loadRecords() {
+  if (currentUser) {
+    loadFromFirestore();
+  } else {
+    loadFromLocal();
+    renderTimeline();
+    updateSummary();
+    renderFeedback();
+  }
+}
+
+function loadFromLocal() {
+  const saved = localStorage.getItem('records');
+  records = saved ? JSON.parse(saved) : [];
+}
+
+function saveToLocal() {
+  localStorage.setItem('records', JSON.stringify(records));
+}
+
+async function loadFromFirestore() {
+  if (!currentUser) return;
+  const babyId = getBabyId();
+  const q = query(
+    collection(db, 'babies', babyId, 'records'),
+    orderBy('time', 'desc')
+  );
+  if (unsubscribeRecords) unsubscribeRecords();
+  unsubscribeRecords = onSnapshot(q, (snap) => {
+    records = snap.docs.map(d => ({ id: d.id, ...d.data(), time: d.data().time?.toDate?.()?.toISOString() || d.data().time }));
+    renderTimeline();
+    updateSummary();
+    updateLastFeed();
+    renderFeedback();
+    renderStats();
+    renderSharedFeed();
+  });
+}
+
+function getBabyId() {
+  return currentUser ? currentUser.uid : 'local';
+}
+
+window.saveRecord = async (type) => {
+  const record = buildRecord(type);
+  if (!record) return;
+  closeModal('modal-' + type);
+  showToast('✅ 저장되었어요!');
+  if (currentUser) {
+    try {
+      const babyId = getBabyId();
+      await addDoc(collection(db, 'babies', babyId, 'records'), { ...record, createdBy: currentUser.uid, createdByName: currentUser.displayName || '나' });
+    } catch(e) { showToast('저장 실패: ' + e.message); }
+  } else {
+    record.id = Date.now().toString();
+    records.unshift(record);
+    saveToLocal();
+    renderTimeline();
+    updateSummary();
+    updateLastFeed();
+    renderFeedback();
+  }
+};
+
+function buildRecord(type) {
+  const now = new Date().toISOString();
+  switch(type) {
+    case 'feed': {
+      const typeEl = document.querySelector('#modal-feed .type-pill.active');
+      const feedType = typeEl ? typeEl.textContent.trim() : '모유';
+      const amount = document.getElementById('feed-amount').value;
+      const time = document.getElementById('feed-time').value || now;
+      const memo = document.getElementById('feed-memo').value;
+      return { type:'feed', feedType, amount: amount || null, time: new Date(time).toISOString(), memo, icon:'🍼', label:'수유', detail: feedType + (amount ? ` ${amount}ml/분` : '') };
+    }
+    case 'sleep': {
+      const start = document.getElementById('sleep-start').value;
+      const end = document.getElementById('sleep-end').value;
+      const memo = document.getElementById('sleep-memo').value;
+      if (!start) { showToast('수면 시작 시간을 입력해주세요'); return null; }
+      const startD = new Date(start), endD = end ? new Date(end) : null;
+      const duration = endD ? Math.round((endD-startD)/60000) : null;
+      return { type:'sleep', time: startD.toISOString(), endTime: endD?.toISOString()||null, duration, memo, icon:'😴', label:'수면', detail: duration ? `${Math.floor(duration/60)}시간 ${duration%60}분` : '진행중' };
+    }
+    case 'diaper': {
+      const typeEl = document.querySelector('#modal-diaper .type-pill.active');
+      const diaperType = typeEl ? typeEl.textContent.replace(/[💧💩]/g,'').trim() : '소변';
+      const time = document.getElementById('diaper-time').value || now;
+      const memo = document.getElementById('diaper-memo').value;
+      return { type:'diaper', diaperType, time: new Date(time).toISOString(), memo, icon: diaperType.includes('대변') ? '💩' : '💧', label:'기저귀', detail: diaperType };
+    }
+    case 'bath': {
+      const time = document.getElementById('bath-time').value || now;
+      const memo = document.getElementById('bath-memo').value;
+      return { type:'bath', time: new Date(time).toISOString(), memo, icon:'🛁', label:'목욕', detail:'목욕 완료' };
+    }
+    case 'temp': {
+      const val = document.getElementById('temp-value').value;
+      if (!val) { showToast('체온을 입력해주세요'); return null; }
+      const methodEl = document.querySelector('#modal-temp .type-pill.active');
+      const method = methodEl ? methodEl.textContent : '';
+      const time = document.getElementById('temp-time').value || now;
+      const memo = document.getElementById('temp-memo').value;
+      return { type:'temp', value: parseFloat(val), method, time: new Date(time).toISOString(), memo, icon:'🌡️', label:'체온', detail: `${val}°C (${method})` };
+    }
+    case 'memo': {
+      const content = document.getElementById('memo-content').value;
+      if (!content.trim()) { showToast('메모 내용을 입력해주세요'); return null; }
+      const time = document.getElementById('memo-time').value || now;
+      return { type:'memo', content, time: new Date(time).toISOString(), icon:'📝', label:'메모', detail: content.slice(0,30) };
+    }
+  }
+}
+
+window.deleteRecord = async (id) => {
+  if (!confirm('삭제할까요?')) return;
+  if (currentUser) {
+    try {
+      await deleteDoc(doc(db, 'babies', getBabyId(), 'records', id));
+    } catch(e) {}
+  } else {
+    records = records.filter(r => r.id !== id);
+    saveToLocal();
+    renderTimeline();
+    updateSummary();
+  }
+  showToast('🗑️ 삭제되었어요');
+};
+
+// ── RENDER TIMELINE ──
+function renderTimeline() {
+  const today = new Date().toDateString();
+  const todayStr = getLocalDateStr();
+
+  // 일반 기록
+  const todayRecords = records.filter(r => new Date(r.time).toDateString() === today);
+
+  // 이유식 기록 (오늘 날짜, 먹은 것만)
+  const todayFood = foodRecords
+    .filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate')
+    .map(r => ({
+      id: r.id,
+      type: 'food',
+      icon: r.emoji || '🥣',
+      label: '이유식',
+      detail: r.name + (r.amount ? ' · ' + r.amount : ''),
+      memo: r.memo,
+      time: r.createdAt || (r.date + 'T12:00:00'),
+      isFoodRecord: true
+    }));
+
+  // 합치고 시간순 정렬
+  const allRecords = [...todayRecords, ...todayFood]
+    .sort((a,b) => new Date(b.time) - new Date(a.time));
+
+  const el = document.getElementById('timeline-list');
+  if (allRecords.length === 0) {
+    el.innerHTML = `<div class="empty-timeline"><div class="et-emoji">🌙</div><p>아직 오늘 기록이 없어요<br>위에서 기록을 시작해보세요!</p></div>`;
+    return;
+  }
+  el.innerHTML = allRecords.map(r => `
+    <div class="timeline-item">
+      <div class="tl-icon ${r.type}" style="${r.type==='food' ? 'background:linear-gradient(135deg,#FFF8F0,#FFE8CC);' : ''}">${r.icon || '📝'}</div>
+      <div class="tl-content">
+        <div class="tl-title">${r.label || r.type}</div>
+        <div class="tl-detail">${r.detail || ''}</div>
+        ${r.memo ? `<div class="tl-detail" style="color:var(--text-light);font-size:11px;">💬 ${r.memo}</div>` : ''}
+        <div class="tl-time">${formatTime(r.time)}</div>
+      </div>
+      <div class="tl-actions">
+        <button class="tl-del-btn" onclick="${r.isFoodRecord ? `deleteFoodRecord('${r.id}')` : `deleteRecord('${r.id}')`}">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── 날짜 헬퍼 (로컬 시간 기준) ──
+function getLocalDateStr(date) {
+  const d = date || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', hour12:true });
+}
+
+// ── SUMMARY ──
+function updateSummary() {
+  const today = new Date().toDateString();
+  const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
+  const feedCount = todayRecs.filter(r => r.type === 'feed').length;
+  const diaperCount = todayRecs.filter(r => r.type === 'diaper').length;
+  const sleepMins = todayRecs.filter(r => r.type === 'sleep' && r.duration).reduce((s,r) => s + r.duration, 0);
+  const bathCount = todayRecs.filter(r => r.type === 'bath').length;
+  const tempRecs = todayRecs.filter(r => r.type === 'temp');
+  const lastTemp = tempRecs.length ? tempRecs[tempRecs.length-1].value : null;
+  // 이유식: foodRecords에서 오늘 날짜 기준
+  const todayStr = getLocalDateStr();
+  const foodCount = foodRecords.filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate').length;
+
+  document.getElementById('sum-feed').textContent = feedCount;
+  document.getElementById('sum-sleep').textContent = (sleepMins / 60).toFixed(1);
+  document.getElementById('sum-diaper').textContent = diaperCount;
+  document.getElementById('sum-food').textContent = foodCount;
+  document.getElementById('sum-temp').textContent = lastTemp || '-';
+  document.getElementById('sum-bath').textContent = bathCount;
+}
+
+function updateLastFeed() {
+  const feeds = records.filter(r => r.type === 'feed').sort((a,b) => new Date(b.time)-new Date(a.time));
+  if (feeds.length === 0) { document.getElementById('last-feed-time').textContent = '-'; document.getElementById('next-feed-time').textContent = '-'; return; }
+  const last = new Date(feeds[0].time);
+  const now = new Date();
+  const diffMins = Math.floor((now - last) / 60000);
+  document.getElementById('last-feed-time').textContent = diffMins < 60 ? `${diffMins}분 전` : `${Math.floor(diffMins/60)}시간 전`;
+  const nextMins = 180 - diffMins;
+  document.getElementById('next-feed-time').textContent = nextMins > 0 ? `${nextMins}분 후` : '지금!';
+}
+
+// ── SLEEP TIMER ──
+window.toggleSleepTimer = () => {
+  if (!isSleeping) {
+    sleepStartTime = new Date();
+    isSleeping = true;
+    const local = new Date(sleepStartTime.getTime() - sleepStartTime.getTimezoneOffset()*60000).toISOString().slice(0,16);
+    document.getElementById('sleep-start').value = local;
+    document.getElementById('sleep-timer-btn').className = 'btn-timer stop';
+    document.getElementById('sleep-timer-btn').textContent = '⏹ 일어났어요';
+    document.getElementById('sleep-timer-label').textContent = '수면 중...';
+    sleepTimerInterval = setInterval(updateSleepTimer, 1000);
+    document.getElementById('sleep-active-bar').classList.add('show');
+    closeModal('modal-sleep');
+    showToast('😴 수면 기록 시작!');
+  } else {
+    stopSleepAndSave();
+  }
+};
+
+function updateSleepTimer() {
+  if (!sleepStartTime) return;
+  const elapsed = Math.floor((new Date() - sleepStartTime) / 1000);
+  const h = Math.floor(elapsed/3600).toString().padStart(2,'0');
+  const m = Math.floor((elapsed%3600)/60).toString().padStart(2,'0');
+  const s = (elapsed%60).toString().padStart(2,'0');
+  const display = `${h}:${m}:${s}`;
+  document.getElementById('sleep-timer-display').textContent = display;
+  document.getElementById('sleep-elapsed').textContent = `${m}:${s}`;
+}
+
+window.stopSleep = () => stopSleepAndSave();
+
+async function stopSleepAndSave() {
+  if (!sleepStartTime) return;
+  clearInterval(sleepTimerInterval);
+  const endTime = new Date();
+  const duration = Math.round((endTime - sleepStartTime) / 60000);
+  const record = {
+    type:'sleep', time: sleepStartTime.toISOString(), endTime: endTime.toISOString(),
+    duration, memo:'', icon:'😴', label:'수면', detail: `${Math.floor(duration/60)}시간 ${duration%60}분`
+  };
+  isSleeping = false;
+  sleepStartTime = null;
+  document.getElementById('sleep-active-bar').classList.remove('show');
+  document.getElementById('sleep-timer-btn').className = 'btn-timer start';
+  document.getElementById('sleep-timer-btn').textContent = '▶ 재우기 시작';
+  if (currentUser) {
+    await addDoc(collection(db, 'babies', getBabyId(), 'records'), { ...record, createdBy: currentUser.uid, createdByName: currentUser.displayName || '나' });
+  } else {
+    record.id = Date.now().toString();
+    records.unshift(record);
+    saveToLocal();
+    renderTimeline();
+    updateSummary();
+  }
+  showToast(`😴 수면 ${Math.floor(duration/60)}시간 ${duration%60}분 저장!`);
+}
+
+// ── STATS ──
+function renderStats() {
+  renderBarCharts();
+  renderPieChart();
+}
+
+function renderBarCharts() {
+  const days = getLast7Days();
+  renderBarChart('feed-bar-chart', days.map(d => ({
+    label: d.label,
+    value: records.filter(r => r.type==='feed' && new Date(r.time).toDateString()===d.date).length,
+    max: 15
+  })), 'pink');
+  renderBarChart('sleep-bar-chart', days.map(d => ({
+    label: d.label,
+    value: +(records.filter(r => r.type==='sleep' && r.duration && new Date(r.time).toDateString()===d.date).reduce((s,r)=>s+r.duration,0)/60).toFixed(1),
+    max: 20
+  })), 'blue');
+  renderBarChart('food-bar-chart', days.map(d => ({
+    label: d.label,
+    value: foodRecords.filter(r => r.status==='ate' && (r.localDate || r.date) === d.dateStr).length,
+    max: 5
+  })), 'orange');
+  renderBarChart('diaper-bar-chart', days.map(d => ({
+    label: d.label,
+    value: records.filter(r => r.type==='diaper' && new Date(r.time).toDateString()===d.date).length,
+    max: 15
+  })), 'mint');
+}
+
+function getLast7Days() {
+  const arr = [];
+  for (let i=6; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    arr.push({
+      date: d.toDateString(),
+      dateStr: d.toISOString().split('T')[0],
+      label: ['일','월','화','수','목','금','토'][d.getDay()]
+    });
+  }
+  return arr;
+}
+
+function renderBarChart(id, data, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const max = Math.max(...data.map(d=>d.value), 1);
+  el.innerHTML = data.map(d => `
+    <div class="bar-item">
+      <div class="bar-val">${d.value||''}</div>
+      <div class="bar ${color}" style="height:${Math.max((d.value/max)*90, d.value?4:2)}px"></div>
+      <div class="bar-label">${d.label}</div>
+    </div>
+  `).join('');
+}
+
+function renderPieChart() {
+  const today = new Date().toDateString();
+  const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
+  const todayStr2 = getLocalDateStr();
+  const counts = { feed:0, sleep:0, diaper:0, food:0, bath:0, temp:0 };
+  todayRecs.forEach(r => { if(counts[r.type]!==undefined) counts[r.type]++; });
+  counts.food = foodRecords.filter(r => (r.localDate || r.date) === todayStr2 && r.status === 'ate').length;
+  const labels = { feed:'수유', sleep:'수면', diaper:'기저귀', food:'이유식', bath:'목욕', temp:'체온' };
+  const colors = { feed:'#FF8FAB', sleep:'#93C6F5', diaper:'#A8E6CF', food:'#FFB347', bath:'#C9B8FF', temp:'#FFD93D' };
+  const canvas = document.getElementById('pieChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  if (total === 0) {
+    ctx.clearRect(0,0,120,120);
+    ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.arc(60,60,54,0,Math.PI*2); ctx.fill();
+    document.getElementById('pie-legend').innerHTML = '<div style="color:var(--text-light);font-size:13px;">오늘 기록이 없어요</div>';
+    return;
+  }
+  ctx.clearRect(0,0,120,120);
+  let start = -Math.PI/2;
+  const legendItems = [];
+  Object.entries(counts).forEach(([key, val]) => {
+    if (!val) return;
+    const slice = (val/total) * Math.PI*2;
+    ctx.fillStyle = colors[key];
+    ctx.beginPath(); ctx.moveTo(60,60); ctx.arc(60,60,54,start,start+slice); ctx.closePath(); ctx.fill();
+    start += slice;
+    legendItems.push(`<div class="legend-item"><div class="legend-dot" style="background:${colors[key]}"></div>${labels[key]}: ${val}회</div>`);
+  });
+  document.getElementById('pie-legend').innerHTML = legendItems.join('');
+}
+
+// ── GROWTH ──
+const WHO_WEIGHT_BOYS = [[0,3.3],[1,4.5],[2,5.6],[3,6.4],[4,7.0],[5,7.5],[6,7.9],[9,9.2],[12,10.3],[18,11.5],[24,12.6]];
+const WHO_WEIGHT_GIRLS = [[0,3.2],[1,4.2],[2,5.1],[3,5.8],[4,6.4],[5,6.9],[6,7.3],[9,8.6],[12,9.6],[18,10.8],[24,12.0]];
+
+window.saveGrowth = async () => {
+  const w = document.getElementById('g-weight').value;
+  const h = document.getElementById('g-height').value;
+  const head = document.getElementById('g-head').value;
+  const date = document.getElementById('g-date').value;
+  if (!w && !h) { showToast('몸무게 또는 키를 입력해주세요'); return; }
+  const growth = { weight: w?parseFloat(w):null, height: h?parseFloat(h):null, head: head?parseFloat(head):null, date, createdAt: new Date().toISOString() };
+  let growthData = JSON.parse(localStorage.getItem('growthData') || '[]');
+  growthData.push(growth);
+  localStorage.setItem('growthData', JSON.stringify(growthData));
+  if (currentUser) {
+    await addDoc(collection(db, 'babies', getBabyId(), 'growth'), growth);
+  }
+  showToast('📏 성장 기록 저장!');
+  renderGrowthChart();
+};
+
+function renderGrowthChart() {
+  const data = JSON.parse(localStorage.getItem('growthData') || '[]').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const canvas = document.getElementById('growthChart');
+  if (!canvas || data.length === 0) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.offsetWidth || 300, h = 200;
+  canvas.width = w; canvas.height = h;
+  ctx.clearRect(0,0,w,h);
+  if (data.length < 2) return;
+  const weights = data.map(d=>d.weight).filter(Boolean);
+  if (weights.length < 2) return;
+  const minW = Math.min(...weights)*0.8, maxW = Math.max(...weights)*1.1;
+  const pad = { t:20, b:30, l:40, r:20 };
+  const cw = w-pad.l-pad.r, ch = h-pad.t-pad.b;
+  const toX = (i) => pad.l + (i/(data.length-1))*cw;
+  const toY = (v) => pad.t + (1-(v-minW)/(maxW-minW))*ch;
+  ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+  for (let i=0;i<5;i++) {
+    const y = pad.t + (i/4)*ch;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(w-pad.r,y); ctx.stroke();
+    const val = (maxW - i/4*(maxW-minW)).toFixed(1);
+    ctx.fillStyle = '#aaa'; ctx.font = '10px sans-serif'; ctx.fillText(val, 2, y+4);
+  }
+  ctx.strokeStyle = '#FF8FAB'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  data.forEach((d,i) => { if(!d.weight) return; i===0 ? ctx.moveTo(toX(i),toY(d.weight)) : ctx.lineTo(toX(i),toY(d.weight)); });
+  ctx.stroke();
+  data.forEach((d,i) => {
+    if(!d.weight) return;
+    ctx.fillStyle = '#FF8FAB'; ctx.beginPath(); ctx.arc(toX(i),toY(d.weight),5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(toX(i),toY(d.weight),2.5,0,Math.PI*2); ctx.fill();
+  });
+  document.getElementById('growth-percentile').innerHTML = '<div class="p-badge">WHO 기준 성장 추이</div>';
+}
+
+// ── VACCINES ──
+function renderVaccineList() {
+  if (!babyInfo) return;
+  const birth = new Date(babyInfo.birth);
+  const now = new Date();
+  const ageMonths = Math.floor((now-birth)/(30*24*60*60*1000));
+  const vaccines = [
+    { name: 'BCG (결핵)', when: '생후 4주 이내', dueMonth: 1 },
+    { name: 'B형 간염 1차', when: '출생 시', dueMonth: 0 },
+    { name: 'B형 간염 2차', when: '생후 1개월', dueMonth: 1 },
+    { name: 'DTaP 1차 (디프테리아·파상풍·백일해)', when: '생후 2개월', dueMonth: 2 },
+    { name: 'IPV 1차 (소아마비)', when: '생후 2개월', dueMonth: 2 },
+    { name: 'Hib 1차 (뇌수막염)', when: '생후 2개월', dueMonth: 2 },
+    { name: 'PCV 1차 (폐렴구균)', when: '생후 2개월', dueMonth: 2 },
+    { name: 'DTaP 2차', when: '생후 4개월', dueMonth: 4 },
+    { name: 'IPV 2차', when: '생후 4개월', dueMonth: 4 },
+    { name: 'Hib 2차', when: '생후 4개월', dueMonth: 4 },
+    { name: 'PCV 2차', when: '생후 4개월', dueMonth: 4 },
+    { name: 'DTaP 3차', when: '생후 6개월', dueMonth: 6 },
+    { name: 'B형 간염 3차', when: '생후 6개월', dueMonth: 6 },
+    { name: 'Hib 3차', when: '생후 6개월', dueMonth: 6 },
+    { name: 'PCV 3차', when: '생후 6개월', dueMonth: 6 },
+    { name: 'MMR (홍역·볼거리·풍진)', when: '생후 12개월', dueMonth: 12 },
+    { name: '수두', when: '생후 12개월', dueMonth: 12 },
+    { name: 'A형 간염 1차', when: '생후 12개월', dueMonth: 12 },
+    { name: 'DTaP 4차', when: '생후 15-18개월', dueMonth: 15 },
+  ];
+  const savedChecks = JSON.parse(localStorage.getItem('vaccineChecks') || '{}');
+  const el = document.getElementById('vaccine-list');
+  el.innerHTML = vaccines.map((v,i) => {
+    const done = savedChecks[i];
+    let badgeClass = 'upcoming', badgeText = '예정';
+    if (done) { badgeClass = 'done'; badgeText = '완료 ✓'; }
+    else if (ageMonths >= v.dueMonth) { badgeClass = 'soon'; badgeText = '접종 시기!'; }
+    return `
+      <div class="vaccine-item">
+        <div class="vaccine-check ${done?'done':''}" onclick="toggleVaccine(${i}, this)"></div>
+        <div class="vaccine-info">
+          <div class="v-name">${v.name}</div>
+          <div class="v-when">${v.when}</div>
+        </div>
+        <span class="vaccine-due ${badgeClass}">${badgeText}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+window.toggleVaccine = (i, el) => {
+  const checks = JSON.parse(localStorage.getItem('vaccineChecks') || '{}');
+  checks[i] = !checks[i];
+  localStorage.setItem('vaccineChecks', JSON.stringify(checks));
+  el.classList.toggle('done', checks[i]);
+  renderVaccineList();
+};
+
+// ── FAMILY / INVITE ──
+function generateInviteLink() {
+  if (!currentUser) return;
+  const link = `${location.origin}${location.pathname}?join=${currentUser.uid}`;
+  document.getElementById('invite-link').textContent = link;
+}
+
+window.shareLink = () => {
+  const link = document.getElementById('invite-link').textContent;
+  if (navigator.share) {
+    navigator.share({ title: '아기일기 초대', text: `${babyInfo?.name||'아기'} 육아 기록에 초대합니다! 링크를 눌러 함께 기록해요 🍼`, url: link });
+  } else {
+    navigator.clipboard.writeText(link).then(() => showToast('📋 링크가 복사되었어요!'));
+  }
+};
+
+function renderSharedFeed() {
+  const recent = records.slice(0,10);
+  if (recent.length === 0) {
+    document.getElementById('shared-feed').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-light);font-size:14px;">최근 48시간 기록이 없어요</div>';
+    return;
+  }
+  document.getElementById('shared-feed').innerHTML = recent.map(r => `
+    <div class="timeline-item">
+      <div class="tl-icon ${r.type}">${r.icon||'📝'}</div>
+      <div class="tl-content">
+        <div class="tl-title">${r.label}</div>
+        <div class="tl-detail">${r.detail}</div>
+        <div class="tl-time">${formatTime(r.time)} · ${r.createdByName||'나'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── MODAL HELPERS ──
+window.openModal = (type) => {
+  setDefaultTimes();
+  document.querySelectorAll('.type-pill').forEach(p => {
+    if (p.closest('#modal-' + type)) p.classList.remove('active');
+  });
+  const firstPill = document.querySelector(`#modal-${type} .type-pill`);
+  if (firstPill) firstPill.classList.add('active');
+  document.getElementById('modal-' + type).classList.add('show');
+};
+
+window.closeModal = (id) => {
+  document.getElementById(id).classList.remove('show');
+};
+
+window.closeModalOutside = (e, id) => {
+  if (e.target.id === id) closeModal(id);
+};
+
+window.selectPill = (el, group) => {
+  el.closest('.type-pills').querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+};
+
+// ── NAVIGATION ──
+window.switchPage = (name, btn) => {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'stats') { renderStats(); }
+  if (name === 'food') { initFoodPage(); }
+  if (name === 'growth') { renderGrowthChart(); renderVaccineList(); }
+  if (name === 'family') { generateInviteLink(); renderSharedFeed(); }
+};
+
+window.goToFamily = () => {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-family').classList.add('active');
+  document.querySelectorAll('.nav-btn')[3].classList.add('active');
+  generateInviteLink(); renderSharedFeed();
+};
+
+// ── TOAST ──
+window.showToast = (msg) => {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+};
+
+// ── SPLASH → AUTH/APP ──
+setTimeout(() => {
+  document.getElementById('splash').style.opacity = '0';
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        document.getElementById('auth-screen').style.display = 'flex';
+      }
+    });
+  }, 500);
+}, 1800);
+
+// ── JOIN INVITE ──
+const urlParams = new URLSearchParams(location.search);
+const joinUid = urlParams.get('join');
+if (joinUid) localStorage.setItem('sharedBabyUid', joinUid);
+
+// setInterval for last feed update
+setInterval(() => { if (records.length) { updateLastFeed(); renderFeedback(); } }, 60000);
+function getAgeMonths() {
+  if (!babyInfo) return 0;
+  const birth = new Date(babyInfo.birth);
+  const now = new Date();
+  // 수정연령 적용
+  if (babyInfo.preterm && babyInfo.dueDate) {
+    const due = new Date(babyInfo.dueDate);
+    return Math.max(0, Math.floor((now - due) / (30*24*60*60*1000)));
+  }
+  return Math.floor((now - birth) / (30*24*60*60*1000));
+}
+
+// 월령별 정상 범위 기준 (WHO + 소아과 가이드라인)
+const NORMS = {
+  feed: [
+    { max: 1,  min: 8,  maxN: 12, label: '신생아' },
+    { max: 2,  min: 7,  maxN: 10, label: '1~2개월' },
+    { max: 3,  min: 6,  maxN: 8,  label: '2~3개월' },
+    { max: 4,  min: 5,  maxN: 8,  label: '3~4개월' },
+    { max: 6,  min: 5,  maxN: 7,  label: '4~6개월' },
+    { max: 9,  min: 4,  maxN: 6,  label: '6~9개월' },
+    { max: 12, min: 3,  maxN: 5,  label: '9~12개월' },
+    { max: 24, min: 3,  maxN: 5,  label: '12개월 이상' },
+  ],
+  sleep: [ // 총 수면 시간(시간)
+    { max: 1,  min: 14, maxN: 17, label: '신생아' },
+    { max: 3,  min: 14, maxN: 17, label: '1~3개월' },
+    { max: 6,  min: 12, maxN: 16, label: '3~6개월' },
+    { max: 9,  min: 12, maxN: 15, label: '6~9개월' },
+    { max: 12, min: 11, maxN: 14, label: '9~12개월' },
+    { max: 24, min: 11, maxN: 14, label: '12개월 이상' },
+  ],
+  diaper: [ // 기저귀 소변 횟수
+    { max: 2,  min: 6,  maxN: 12, label: '신생아' },
+    { max: 6,  min: 6,  maxN: 10, label: '~6개월' },
+    { max: 24, min: 4,  maxN: 8,  label: '6개월 이상' },
+  ]
+};
+
+function getNorm(type, ageMonths) {
+  const list = NORMS[type];
+  for (const n of list) {
+    if (ageMonths < n.max) return n;
+  }
+  return list[list.length - 1];
+}
+
+function renderFeedback() {
+  const el = document.getElementById('feedback-section');
+  if (!el || !babyInfo) return;
+  const ageMonths = getAgeMonths();
+  const today = new Date().toDateString();
+  const todayStr = getLocalDateStr();
+  const todayRecs = records.filter(r => new Date(r.time).toDateString() === today);
+  
+  const feedCount = todayRecs.filter(r => r.type === 'feed').length;
+  const sleepMins = todayRecs.filter(r => r.type === 'sleep' && r.duration).reduce((s,r) => s+r.duration, 0);
+  const sleepHours = +(sleepMins / 60).toFixed(1);
+  const diaperCount = todayRecs.filter(r => r.type === 'diaper').length;
+  const pooCount = todayRecs.filter(r => r.type === 'diaper' && (r.diaperType||'').includes('대변')).length;
+  const tempRecs = todayRecs.filter(r => r.type === 'temp');
+  const lastTemp = tempRecs.length ? tempRecs[tempRecs.length-1].value : null;
+  // 이유식
+  const foodCount = foodRecords.filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate').length;
+  const foodNames = foodRecords.filter(r => (r.localDate || r.date) === todayStr && r.status === 'ate').map(r => r.name).join(', ');
+  const alertFood = foodRecords.filter(r => r.reaction === '알레르기').map(r => r.name);
+
+  const feedNorm = getNorm('feed', ageMonths);
+  const sleepNorm = getNorm('sleep', ageMonths);
+  const diaperNorm = getNorm('diaper', ageMonths);
+  // 이유식 기준: 6개월 미만 0~1회, 6~8개월 1~2회, 8개월 이상 2~3회
+  const foodNormMin = ageMonths < 6 ? 0 : ageMonths < 8 ? 1 : 2;
+  const foodNormMax = ageMonths < 6 ? 1 : ageMonths < 8 ? 2 : 3;
+
+  const getStatus = (val, min, max) => {
+    if (val < min) return { cls: 'low', text: '부족' };
+    if (val > max) return { cls: 'high', text: '많음' };
+    return { cls: 'ok', text: '정상 ✓' };
+  };
+
+  const feedStatus = getStatus(feedCount, feedNorm.min, feedNorm.maxN);
+  const sleepStatus = getStatus(sleepHours, sleepNorm.min, sleepNorm.maxN);
+  const diaperStatus = getStatus(diaperCount, diaperNorm.min, diaperNorm.maxN);
+  const foodStatus = ageMonths >= 5 ? getStatus(foodCount, foodNormMin, foodNormMax) : null;
+
+  // 인사이트 메시지 생성
+  const insights = [];
+  if (feedCount > 0 && feedStatus.cls !== 'ok') {
+    if (feedStatus.cls === 'low') insights.push(`🍼 수유 횟수가 조금 <strong>적어요</strong>. ${ageMonths}개월 기준 하루 ${feedNorm.min}~${feedNorm.maxN}회가 권장돼요.`);
+    else insights.push(`🍼 수유가 <strong>많은 편</strong>이에요. 수유 간격을 조금 늘려보세요.`);
+  }
+  if (sleepHours > 0 && sleepStatus.cls !== 'ok') {
+    if (sleepStatus.cls === 'low') insights.push(`😴 수면이 <strong>부족해요</strong>. ${ageMonths}개월 기준 하루 ${sleepNorm.min}~${sleepNorm.maxN}시간이 필요해요.`);
+    else insights.push(`😴 오늘 수면이 <strong>아주 많네요</strong>. 컨디션이 좋지 않은지 확인해보세요.`);
+  }
+  if (lastTemp !== null) {
+    if (lastTemp >= 38.0) insights.push(`🌡️ 체온이 <strong>${lastTemp}°C</strong>로 발열 기준(38°C)이에요. 소아과 방문을 고려해보세요.`);
+    else if (lastTemp >= 37.5) insights.push(`🌡️ 체온이 <strong>${lastTemp}°C</strong>로 미열이에요. 수분 보충과 관찰이 필요해요.`);
+    else insights.push(`🌡️ 체온 <strong>${lastTemp}°C</strong> 정상이에요 ✓`);
+  }
+  if (pooCount === 0 && ageMonths >= 1 && diaperCount > 0) {
+    insights.push(`💩 오늘 대변 기록이 없어요. 2~3일 이상 없으면 소아과에 문의해보세요.`);
+  }
+  if (ageMonths >= 5 && foodCount > 0) {
+    insights.push(`🥣 오늘 이유식 <strong>${foodCount}회</strong> 먹었어요${foodNames ? ' (' + foodNames + ')' : ''}. ${ageMonths}개월 기준 하루 ${foodNormMin}~${foodNormMax}회 권장이에요.`);
+  }
+  if (alertFood.length > 0) {
+    insights.push(`⚠️ 알레르기 반응 음식: <strong>${alertFood.join(', ')}</strong> — 다시 시도 시 주의하세요.`);
+  }
+  if (feedCount === 0 && sleepHours === 0 && diaperCount === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="feedback-card ${feedStatus.cls === 'ok' && sleepStatus.cls === 'ok' && diaperStatus.cls === 'ok' ? 'good' : 'warn'}">
+      <div class="feedback-title">📋 오늘 ${ageMonths}개월 기준 분석</div>
+      <div class="feedback-rows">
+        <div class="feedback-row">
+          <span class="fb-label">🍼 수유</span>
+          <span class="fb-value">${feedCount}회</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${feedNorm.min}~${feedNorm.maxN}회</span>
+          <span class="fb-status ${feedStatus.cls}">${feedStatus.text}</span>
+        </div>
+        <div class="feedback-row">
+          <span class="fb-label">😴 수면</span>
+          <span class="fb-value">${sleepHours}시간</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${sleepNorm.min}~${sleepNorm.maxN}h</span>
+          <span class="fb-status ${sleepStatus.cls}">${sleepStatus.text}</span>
+        </div>
+        <div class="feedback-row">
+          <span class="fb-label">💧 기저귀</span>
+          <span class="fb-value">${diaperCount}회</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${diaperNorm.min}~${diaperNorm.maxN}회</span>
+          <span class="fb-status ${diaperStatus.cls}">${diaperStatus.text}</span>
+        </div>
+        ${ageMonths >= 5 ? `
+        <div class="feedback-row">
+          <span class="fb-label">🥣 이유식</span>
+          <span class="fb-value">${foodCount}회</span>
+          <span style="font-size:11px;color:var(--text-light);">권장 ${foodNormMin}~${foodNormMax}회</span>
+          <span class="fb-status ${foodStatus ? foodStatus.cls : 'ok'}">${foodStatus ? foodStatus.text : '정상 ✓'}</span>
+        </div>` : ''}
+        ${lastTemp ? `
+        <div class="feedback-row">
+          <span class="fb-label">🌡️ 체온</span>
+          <span class="fb-value">${lastTemp}°C</span>
+          <span style="font-size:11px;color:var(--text-light);">정상 36.5~37.5°C</span>
+          <span class="fb-status ${lastTemp >= 38 ? 'high' : lastTemp >= 37.5 ? 'low' : 'ok'}">${lastTemp >= 38 ? '발열!' : lastTemp >= 37.5 ? '미열' : '정상 ✓'}</span>
+        </div>` : ''}
+      </div>
+    </div>
+    ${insights.length > 0 ? `
+    <div class="insight-box">
+      <div class="insight-title">💡 오늘의 육아 인사이트</div>
+      ${insights.map(i => `<div class="insight-item">${i}</div>`).join('')}
+    </div>` : `
+    <div class="insight-box">
+      <div class="insight-title">💡 오늘의 육아 인사이트</div>
+      <div class="insight-item">✨ 오늘 모든 기록이 <strong>${ageMonths}개월 기준 정상 범위</strong>예요! 잘 하고 계세요 👏</div>
+    </div>`}
+  `;
+}
+
+
+// ── FOOD DATABASE ──
+const FOOD_DB = [
+  // 채소
+  { name:'당근', emoji:'🥕', cat:'채소', intro:'4~6개월' },
+  { name:'고구마', emoji:'🍠', cat:'채소', intro:'4~6개월' },
+  { name:'감자', emoji:'🥔', cat:'채소', intro:'4~6개월' },
+  { name:'애호박', emoji:'🥒', cat:'채소', intro:'4~6개월' },
+  { name:'브로콜리', emoji:'🥦', cat:'채소', intro:'5~6개월' },
+  { name:'시금치', emoji:'🌿', cat:'채소', intro:'6개월 이후' },
+  { name:'완두콩', emoji:'🟢', cat:'채소', intro:'6~7개월' },
+  { name:'양파', emoji:'🧅', cat:'채소', intro:'7개월 이후' },
+  { name:'무', emoji:'⬜', cat:'채소', intro:'6개월 이후' },
+  { name:'콜리플라워', emoji:'🥦', cat:'채소', intro:'6개월 이후' },
+  { name:'비트', emoji:'🟣', cat:'채소', intro:'6개월 이후' },
+  { name:'파프리카', emoji:'🫑', cat:'채소', intro:'7개월 이후' },
+  // 과일
+  { name:'사과', emoji:'🍎', cat:'과일', intro:'4~6개월' },
+  { name:'배', emoji:'🍐', cat:'과일', intro:'4~6개월' },
+  { name:'바나나', emoji:'🍌', cat:'과일', intro:'5~6개월' },
+  { name:'아보카도', emoji:'🥑', cat:'과일', intro:'4~6개월' },
+  { name:'복숭아', emoji:'🍑', cat:'과일', intro:'6개월 이후' },
+  { name:'망고', emoji:'🥭', cat:'과일', intro:'8개월 이후' },
+  { name:'블루베리', emoji:'🫐', cat:'과일', intro:'8개월 이후' },
+  { name:'딸기', emoji:'🍓', cat:'과일', intro:'8개월 이후' },
+  { name:'수박', emoji:'🍉', cat:'과일', intro:'8개월 이후' },
+  { name:'포도', emoji:'🍇', cat:'과일', intro:'10개월 이후' },
+  // 곡류
+  { name:'쌀미음', emoji:'🍚', cat:'곡류', intro:'4~6개월' },
+  { name:'오트밀', emoji:'🌾', cat:'곡류', intro:'5~6개월' },
+  { name:'현미', emoji:'🌾', cat:'곡류', intro:'6개월 이후' },
+  { name:'보리', emoji:'🌾', cat:'곡류', intro:'7개월 이후' },
+  { name:'쌀죽', emoji:'🍚', cat:'곡류', intro:'6개월 이후' },
+  // 단백질
+  { name:'닭고기', emoji:'🍗', cat:'단백질', intro:'7~8개월' },
+  { name:'소고기', emoji:'🥩', cat:'단백질', intro:'6~7개월' },
+  { name:'돼지고기', emoji:'🥩', cat:'단백질', intro:'7~8개월' },
+  { name:'연어', emoji:'🐟', cat:'단백질', intro:'8개월 이후' },
+  { name:'흰살생선', emoji:'🐟', cat:'단백질', intro:'7개월 이후' },
+  { name:'두부', emoji:'⬜', cat:'단백질', intro:'6~7개월' },
+  { name:'달걀노른자', emoji:'🥚', cat:'단백질', intro:'6개월 이후' },
+  { name:'렌틸콩', emoji:'🟤', cat:'단백질', intro:'7개월 이후' },
+  // 유제품
+  { name:'요거트', emoji:'🥛', cat:'유제품', intro:'8개월 이후' },
+  { name:'치즈', emoji:'🧀', cat:'유제품', intro:'8개월 이후' },
+];
+
+let currentFoodCat = '전체';
+let selectedFoodName = '';
+let selectedFoodEmoji = '🥣';
+let selectedReaction = '잘먹음';
+let selectedFoodStatus = 'ate';
+let currentFoodTab = 'all';
+let foodRecords = [];
+
+function initFoodPage() {
+  const today = getLocalDateStr();
+  document.getElementById('food-date').value = today;
+  loadFoodRecords();
+}
+
+// 앱 시작 시 이유식 데이터 로드 (홈화면 요약/타임라인 업데이트용)
+// ── 이유식 단일 리스너 (홈화면 + 이유식탭 모두 업데이트) ──
+let unsubscribeFood = null;
+
+function loadFoodRecordsOnStart() {
+  if (currentUser) {
+    initFoodListener();
+  } else {
+    foodRecords = JSON.parse(localStorage.getItem('foodRecords') || '[]');
+    refreshAllFoodViews();
+  }
+}
+
+function loadFoodRecords() {
+  if (currentUser) {
+    if (!unsubscribeFood) initFoodListener();
+    else refreshAllFoodViews();
+  } else {
+    foodRecords = JSON.parse(localStorage.getItem('foodRecords') || '[]');
+    refreshAllFoodViews();
+  }
+}
+
+function initFoodListener() {
+  if (!currentUser) return;
+  const babyId = getBabyId();
+  const q = query(
+    collection(db, 'babies', babyId, 'foodRecords'),
+    orderBy('createdAt', 'desc')
+  );
+  if (unsubscribeFood) unsubscribeFood();
+  unsubscribeFood = onSnapshot(q, (snap) => {
+    foodRecords = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
+    refreshAllFoodViews();
+  });
+}
+
+function refreshAllFoodViews() {
+  // 홈화면
+  updateSummary();
+  renderTimeline();
+  renderFeedback();
+  // 이유식 탭이 열려 있으면
+  const foodPage = document.getElementById('page-food');
+  if (foodPage && foodPage.classList.contains('active')) {
+    renderFoodList();
+    updateFoodStats();
+  }
+  // 통계 탭이 열려 있으면
+  const statsPage = document.getElementById('page-stats');
+  if (statsPage && statsPage.classList.contains('active')) {
+    renderStats();
+  }
+}
+
+function saveFoodRecords() {
+  localStorage.setItem('foodRecords', JSON.stringify(foodRecords));
+}
+
+window.selectFoodCat = (btn, cat) => {
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFoodCat = cat;
+  const query = document.getElementById('food-search-input').value;
+  if (query) searchFood(query);
+};
+
+window.searchFood = (query) => {
+  const resultsEl = document.getElementById('food-search-results');
+  if (!query.trim()) {
+    resultsEl.classList.remove('show');
+    return;
+  }
+  let filtered = FOOD_DB.filter(f =>
+    f.name.includes(query) &&
+    (currentFoodCat === '전체' || f.cat === currentFoodCat)
+  );
+  // 직접 입력 옵션 항상 맨 위
+  const directOption = { name: query, emoji: '🥣', cat: '직접입력', intro: '' };
+  if (!filtered.find(f => f.name === query)) filtered = [directOption, ...filtered];
+
+  if (filtered.length === 0) {
+    resultsEl.classList.remove('show');
+    return;
+  }
+  resultsEl.innerHTML = filtered.slice(0,8).map(f => `
+    <div class="food-result-item" onclick="selectFood('${f.name}','${f.emoji}')">
+      <span class="f-emoji">${f.emoji}</span>
+      <div>
+        <div class="f-name">${f.name}</div>
+        <div class="f-cat">${f.cat}${f.intro ? ' · 도입시기: ' + f.intro : ''}</div>
+      </div>
+    </div>
+  `).join('');
+  resultsEl.classList.add('show');
+};
+
+window.selectFood = (name, emoji) => {
+  selectedFoodName = name;
+  selectedFoodEmoji = emoji;
+  document.getElementById('food-search-input').value = name;
+  document.getElementById('selected-food-display').textContent = emoji + ' ' + name + ' 선택됨';
+  document.getElementById('food-search-results').classList.remove('show');
+};
+
+window.selectReaction = (btn, reaction) => {
+  document.querySelectorAll('.reaction-pill').forEach(b => {
+    if (b.closest('.food-reaction-pills') === btn.closest('.food-reaction-pills')) {
+      b.classList.remove('active');
+    }
+  });
+  btn.classList.add('active');
+  selectedReaction = reaction;
+};
+
+window.selectStatus = (status) => {
+  selectedFoodStatus = status;
+  document.getElementById('status-ate').classList.toggle('active', status === 'ate');
+  document.getElementById('status-todo').classList.toggle('active', status === 'todo');
+};
+
+window.saveFoodRecord = async () => {
+  const name = selectedFoodName || document.getElementById('food-search-input').value.trim();
+  if (!name) { showToast('음식 이름을 입력해주세요'); return; }
+  const date = document.getElementById('food-date').value;
+  const amount = document.getElementById('food-amount').value;
+  const memo = document.getElementById('food-memo').value;
+  const record = {
+    name, emoji: selectedFoodEmoji,
+    date, amount, memo,
+    reaction: selectedFoodStatus === 'todo' ? 'todo' : selectedReaction,
+    status: selectedFoodStatus,
+    createdAt: new Date().toISOString(),
+    localDate: date, // 사용자가 선택한 날짜
+    createdBy: currentUser?.uid || 'local',
+    createdByName: currentUser?.displayName || '나'
+  };
+
+  // 즉시 로컬에 추가하여 화면 반영 (Firebase도 동기화)
+  record.id = Date.now().toString();
+  foodRecords.unshift(record);
+  saveFoodRecords();
+  refreshAllFoodViews();
+
+  if (currentUser) {
+    try {
+      const babyId = getBabyId();
+      await addDoc(collection(db, 'babies', babyId, 'foodRecords'), record);
+    } catch(e) { console.log('food save error', e); }
+  }
+
+  // 폼 초기화
+  document.getElementById('food-search-input').value = '';
+  document.getElementById('food-amount').value = '';
+  document.getElementById('food-memo').value = '';
+  document.getElementById('selected-food-display').textContent = '👆 위에서 음식을 검색하거나 직접 입력하세요';
+  selectedFoodName = '';
+  selectedFoodEmoji = '🥣';
+  showToast('🥣 이유식 기록 저장!');
+};
+
+window.deleteFoodRecord = async (id) => {
+  if (!confirm('삭제할까요?')) return;
+  if (currentUser) {
+    try {
+      await deleteDoc(doc(db, 'babies', getBabyId(), 'foodRecords', id));
+    } catch(e) {
+      foodRecords = foodRecords.filter(r => r.id !== id);
+      saveFoodRecords();
+      renderFoodList();
+      updateFoodStats();
+    }
+  } else {
+    foodRecords = foodRecords.filter(r => r.id !== id);
+    saveFoodRecords();
+    renderFoodList();
+    updateFoodStats();
+  }
+  showToast('🗑️ 삭제되었어요');
+};
+
+window.switchFoodTab = (btn, tab) => {
+  document.querySelectorAll('.food-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFoodTab = tab;
+  renderFoodList();
+};
+
+function getReactionLabel(reaction) {
+  const map = {
+    '잘먹음': { text:'잘먹음 😋', cls:'good' },
+    '보통': { text:'보통 😐', cls:'warn' },
+    '알레르기': { text:'알레르기 ⚠️', cls:'bad' },
+    '거부': { text:'거부 🙅', cls:'reject' },
+    'todo': { text:'예정 📋', cls:'todo' },
+  };
+  return map[reaction] || { text: reaction, cls:'good' };
+}
+
+function renderFoodList() {
+  let filtered = foodRecords;
+  if (currentFoodTab === 'ate') filtered = foodRecords.filter(r => r.status === 'ate');
+  else if (currentFoodTab === 'todo') filtered = foodRecords.filter(r => r.status === 'todo');
+  else if (currentFoodTab === 'reject') filtered = foodRecords.filter(r => r.reaction === '거부' || r.reaction === '알레르기');
+
+  const el = document.getElementById('food-item-list');
+  if (!el) return;
+  if (filtered.length === 0) {
+    el.innerHTML = '<div class="empty-food">🥣 기록이 없어요</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(r => {
+    const badge = getReactionLabel(r.reaction);
+    // 수정 버튼: 예정→먹음 변환, 반응 변경
+    const editBtns = r.status === 'todo'
+      ? `<button class="food-edit-btn" onclick="markFoodAsEaten('${r.id}')" title="먹었어요로 변경">✅</button>`
+      : `<button class="food-edit-btn" onclick="changeFoodReaction('${r.id}')" title="반응 변경">✏️</button>`;
+    return `
+      <div class="food-item">
+        <span class="fi-emoji">${r.emoji}</span>
+        <div class="fi-info">
+          <div class="fi-name">${r.name}</div>
+          <div class="fi-detail">${r.amount ? r.amount + ' · ' : ''}${r.memo || ''}</div>
+          <div class="fi-date">📅 ${r.date}</div>
+        </div>
+        <span class="fi-badge ${badge.cls}">${badge.text}</span>
+        ${editBtns}
+        <button class="food-del-btn" onclick="deleteFoodRecord('${r.id}')">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// 예정 → 먹었어요로 변경
+window.markFoodAsEaten = async (id) => {
+  const idx = foodRecords.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  const updated = { ...foodRecords[idx], status: 'ate', reaction: '잘먹음' };
+  foodRecords[idx] = updated;
+  saveFoodRecords();
+  refreshAllFoodViews(); // 즉시 화면 반영
+  if (currentUser) {
+    try {
+      const { doc: firestoreDoc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+      await updateDoc(firestoreDoc(db, 'babies', getBabyId(), 'foodRecords', id), { status: 'ate', reaction: '잘먹음' });
+    } catch(e) { console.log('sync error', e); }
+  }
+  showToast('✅ 먹었어요로 변경됐어요!');
+};
+
+// 반응 변경 (먹은 음식)
+window.changeFoodReaction = (id) => {
+  const reactions = ['잘먹음', '보통', '알레르기', '거부'];
+  const labels = { '잘먹음':'😋 잘먹음', '보통':'😐 보통', '알레르기':'⚠️ 알레르기', '거부':'🙅 거부' };
+  const idx = foodRecords.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  const current = foodRecords[idx].reaction;
+  const options = reactions.filter(r => r !== current).map(r => `"${r}"`).join(', ');
+  // 간단한 선택 UI를 인라인으로 표시
+  const el = document.querySelector(`[onclick="changeFoodReaction('${id}')"]`);
+  if (!el) return;
+  const wrap = el.closest('.food-item');
+  // 이미 선택창 있으면 닫기
+  const existing = wrap.querySelector('.reaction-select-inline');
+  if (existing) { existing.remove(); return; }
+  const div = document.createElement('div');
+  div.className = 'reaction-select-inline';
+  div.style.cssText = 'position:absolute;right:40px;top:50%;transform:translateY(-50%);background:white;border:2px solid var(--pink-light);border-radius:12px;padding:6px;display:flex;gap:4px;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,0.12);';
+  wrap.style.position = 'relative';
+  reactions.filter(r => r !== current).forEach(reaction => {
+    const btn = document.createElement('button');
+    const rmap = { '잘먹음':'😋', '보통':'😐', '알레르기':'⚠️', '거부':'🙅' };
+    btn.textContent = rmap[reaction];
+    btn.title = reaction;
+    btn.style.cssText = 'border:none;background:none;font-size:18px;cursor:pointer;padding:4px;border-radius:8px;';
+    btn.onclick = async () => {
+      div.remove();
+      const updated = { ...foodRecords[idx], reaction };
+      if (currentUser) {
+        try {
+          const { doc: fd, updateDoc: ud } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+          await ud(fd(db, 'babies', getBabyId(), 'foodRecords', id), { reaction });
+        } catch(e) {
+          foodRecords[idx] = updated;
+          saveFoodRecords();
+          renderFoodList(); updateFoodStats();
+        }
+      } else {
+        foodRecords[idx] = updated;
+        saveFoodRecords();
+        renderFoodList(); updateFoodStats();
+      }
+      showToast('반응이 변경됐어요!');
+    };
+    div.appendChild(btn);
+  });
+  wrap.appendChild(div);
+};
+
+function updateFoodStats() {
+  const ateCount = [...new Set(foodRecords.filter(r => r.status === 'ate').map(r => r.name))].length;
+  const todoCount = [...new Set(foodRecords.filter(r => r.status === 'todo').map(r => r.name))].length;
+  const alertCount = [...new Set(foodRecords.filter(r => r.reaction === '알레르기').map(r => r.name))].length;
+  const ateEl = document.getElementById('food-ate-count');
+  const todoEl = document.getElementById('food-todo-count');
+  const alertEl = document.getElementById('food-alert-count');
+  if (ateEl) ateEl.textContent = ateCount;
+  if (todoEl) todoEl.textContent = todoCount;
+  if (alertEl) alertEl.textContent = alertCount;
+}
+
+// 음식 검색창 외부 클릭 시 닫기
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.food-search-wrap')) {
+    const r = document.getElementById('food-search-results');
+    if (r) r.classList.remove('show');
+  }
+});
+
+</script>
+</body>
+</html>
