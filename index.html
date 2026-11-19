@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <title>아기일기 🍼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   :root {
     --pink: #FF8FAB;
@@ -494,6 +494,27 @@
   .fb-status.ok { background: var(--mint-light); color: #2A8055; }
   .fb-status.low { background: #FFF3CC; color: #B8860B; }
   .fb-status.high { background: #FFE0E0; color: #CC3333; }
+  /* 매일 보는 화면이라 기준 안내는 접어 둔다. 궁금할 때만 펼친다. */
+  .src-note { margin-top:9px; padding-top:8px; border-top:1px solid rgba(0,0,0,0.06); }
+  .src-note > summary {
+    list-style:none; cursor:pointer; font-size:10.5px; color:var(--text-light);
+  }
+  .src-note > summary::-webkit-details-marker { display:none; }
+  .src-note > div {
+    margin-top:6px; font-size:10.5px; line-height:1.6; color:var(--text-light);
+  }
+  /* 한 번 펼쳐 본 사람에게는 설명 문장을 감추고 ⓘ 만 남긴다.
+     매일 여는 화면에 "이 숫자는 어디서 왔나요?" 를 계속 읽히게 둘 이유가 없다.
+     그래도 지우지는 않는다 — 나중에 다시 찾을 수 있어야 한다.
+     전체 출처는 가족 탭 맨 아래 '기준과 출처' 에 항상 있다. */
+  .src-note.seen { border-top:none; padding-top:0; margin-top:4px; }
+  .src-note.seen > summary { opacity:.4; }
+  .src-note.seen > summary .src-label { display:none; }
+
+  .src-note.src-on-dark { border-top-color:rgba(255,255,255,0.18); }
+  .src-note.src-on-dark > summary,
+  .src-note.src-on-dark > div { color:rgba(255,255,255,0.72); }
+
   .insight-box {
     margin: 8px 16px 0;
     background: linear-gradient(135deg, var(--pink-pale), var(--purple-pale));
@@ -855,7 +876,7 @@
   <div class="page" id="page-growth">
     <div class="app-header" style="padding-bottom:20px;">
       <h1 style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:white;">📏 성장 기록</h1>
-      <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">WHO 2006 성장 기준 (캐나다 공식)</p>
+      <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">WHO 2006 성장 기준</p>
     </div>
     <div class="growth-container" style="margin-top:20px;">
       <div class="growth-card">
@@ -886,14 +907,26 @@
         <div class="chart-title">📈 성장 추이</div>
         <canvas id="growthChart" height="200"></canvas>
         <div class="growth-percentile" id="growth-percentile"></div>
-        <p style="margin-top:12px;font-size:11px;line-height:1.5;color:#888;background:#f7f7f7;border-radius:8px;padding:10px;">
-          ℹ️ 이 그래프와 백분위는 WHO 성장 기준을 참고한 <strong>참고 정보</strong>이며 의학적 진단이 아닙니다.
-          아기의 성장·건강은 반드시 소아청소년과 전문의와 상담하세요.
-        </p>
+        <details data-src-key="growth" class="src-note">
+          <summary>ⓘ<span class="src-label"> 이 백분위는 어떤 기준인가요?</span></summary>
+          <div>
+            WHO가 2006년 발표한 아동성장기준(WHO Child Growth Standards)입니다.
+            질병관리청·대한소아과학회의 「2017 소아청소년 성장도표」도 만 3세 미만은 같은 기준을 씁니다.<br>
+            다만 <strong>참고 정보</strong>이며 의학적 진단이 아닙니다.
+            아기의 성장·건강은 반드시 소아청소년과 전문의와 상담하세요.
+          </div>
+        </details>
       </div>
       <div class="growth-card">
         <div class="chart-title">💉 예방접종 체크리스트</div>
         <div class="vaccine-list" id="vaccine-list"></div>
+        <details data-src-key="vaccine" class="src-note">
+          <summary>ⓘ<span class="src-label"> 이 일정은 어떤 기준인가요?</span></summary>
+          <div>
+            질병관리청 예방접종도우미(nip.kdca.go.kr)의 표준예방접종일정을 따랐습니다.<br>
+            실제 접종 일정은 아기수첩과 소아청소년과 안내를 따라 주세요.
+          </div>
+        </details>
       </div>
     </div>
   </div>
@@ -934,6 +967,36 @@
           <div style="text-align:center;padding:20px;color:var(--text-light);font-size:14px;">로그인 후 가족의 기록을 확인할 수 있어요</div>
         </div>
       </div>
+      <div class="family-card">
+        <h3>📚 기준과 출처</h3>
+        <div style="font-size:12px;line-height:1.75;color:var(--text-mid);">
+          <p style="margin-bottom:10px;">
+            <strong>성장 백분위 · 성장곡선</strong><br>
+            WHO 2006 아동성장기준(WHO Child Growth Standards). 캐나다 보건당국이 공식 배포하는
+            원자료를 그대로 사용했고 0~5세를 14일 간격으로 담았습니다.
+            질병관리청·대한소아과학회의 「2017 소아청소년 성장도표」도 만 3세 미만은 같은 기준을 씁니다.
+          </p>
+          <p style="margin-bottom:10px;">
+            <strong>예방접종 일정</strong><br>
+            질병관리청 예방접종도우미(nip.kdca.go.kr) 표준예방접종일정.
+          </p>
+          <p style="margin-bottom:10px;">
+            <strong>수유 · 수면 · 기저귀 참고 범위</strong><br>
+            국제 자료(미국수면재단 등)와 일반 소아과 자료를 참고한 값입니다.
+            국내 의료기관이 발표한 공식 수치는 확인하지 못했습니다.
+          </p>
+          <p style="margin-bottom:10px;">
+            <strong>이유식 도입 시기</strong><br>
+            일반적으로 통용되는 순서를 따랐으며 기관과 자료에 따라 시기가 다릅니다.
+            알레르기가 걱정되는 음식은 소아청소년과와 먼저 상의하세요.
+          </p>
+          <p style="margin:14px 0 0;padding-top:10px;border-top:1px solid rgba(0,0,0,0.06);color:var(--text-light);font-size:11px;">
+            이 앱의 숫자는 <strong>참고 정보</strong>이며 의학적 진단이 아닙니다.
+            정상인지 판정하는 앱이 아니라, 물어볼 만한지 알려주는 앱입니다.
+            마음에 걸리는 숫자가 있으면 그 화면을 소아청소년과에 보여주세요.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -942,6 +1005,15 @@
     <div class="app-header" style="padding-bottom:20px;">
       <h1 style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:white;">🥣 이유식 기록</h1>
       <p style="color:rgba(255,255,255,0.85);font-size:13px;margin-top:4px;">먹은 음식, 반응, 계획을 관리해요</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin-top:3px;">도입 시기는 참고용 · 기관에 따라 다릅니다</p>
+      <details data-src-key="food" class="src-note src-on-dark">
+        <summary>ⓘ<span class="src-label"> 도입 시기 안내</span></summary>
+        <div>
+          일반적으로 통용되는 순서를 따랐고, 기관과 자료에 따라 시기가 다릅니다.<br>
+          알레르기가 걱정되는 음식은 소아청소년과와 먼저 상의하세요.
+          새 음식은 한 번에 하나씩, 며칠 간격을 두고 시도하는 것이 좋습니다.
+        </div>
+      </details>
     </div>
     <div class="food-container" style="margin-top:20px;">
 
@@ -1408,6 +1480,7 @@ function showApp() {
   loadFoodRecordsOnStart(); // 이유식도 앱 시작시 로드
   renderVaccineList();
   generateInviteLink();
+  initSrcNotes();
 }
 
 function updateHeader() {
@@ -1453,6 +1526,8 @@ function loadRecords() {
     loadFromLocal();
     renderTimeline();
     updateSummary();
+    updateLastFeed();   // 이게 빠져 있어서 로그인 없이 쓰면 '마지막 수유'가
+                        // 60초 타이머가 처음 돌 때까지 '-' 로 남아 있었다.
     renderFeedback();
   }
 }
@@ -2031,7 +2106,7 @@ function renderVaccineList() {
     { name: 'Hib 3차', when: '생후 6개월', dueMonth: 6 },
     { name: 'PCV 3차', when: '생후 6개월', dueMonth: 6 },
     { name: 'MMR (홍역·볼거리·풍진)', when: '생후 12개월', dueMonth: 12 },
-    { name: '수두', when: '생후 12개월', dueMonth: 12 },
+    { name: '수두', when: '생후 12~15개월', dueMonth: 12 },
     { name: 'A형 간염 1차', when: '생후 12개월', dueMonth: 12 },
     { name: 'DTaP 4차', when: '생후 15-18개월', dueMonth: 15 },
   ];
@@ -2114,6 +2189,28 @@ window.closeModal = (id) => {
 
 window.closeModalOutside = (e, id) => {
   if (e.target.id === id) closeModal(id);
+};
+
+// 접이식 안내: 한 번 펼쳐 보면 그 다음부터 문장을 접고 ⓘ 만 남긴다.
+function initSrcNotesLater() { setTimeout(() => window.initSrcNotes && window.initSrcNotes(), 0); }
+
+window.initSrcNotes = () => {
+  let seen = {};
+  try { seen = JSON.parse(localStorage.getItem('srcSeen') || '{}'); } catch(e) {}
+  document.querySelectorAll('.src-note[data-src-key]').forEach(d => {
+    const k = d.dataset.srcKey;
+    if (seen[k]) d.classList.add('seen');
+    if (d.dataset.bound) return;
+    d.dataset.bound = '1';
+    d.addEventListener('toggle', () => {
+      if (!d.open) return;
+      let cur = {};
+      try { cur = JSON.parse(localStorage.getItem('srcSeen') || '{}'); } catch(e) {}
+      cur[k] = true;
+      try { localStorage.setItem('srcSeen', JSON.stringify(cur)); } catch(e) {}
+      d.classList.add('seen');
+    });
+  });
 };
 
 window.selectPill = (el, group) => {
@@ -2243,9 +2340,11 @@ function renderFeedback() {
   const foodNormMax = ageMonths < 6 ? 1 : ageMonths < 8 ? 2 : 3;
 
   const getStatus = (val, min, max) => {
-    if (val < min) return { cls: 'low', text: '부족' };
-    if (val > max) return { cls: 'high', text: '많음' };
-    return { cls: 'ok', text: '정상 ✓' };
+    // 국내 의료기관의 공식 수치를 확인하지 못한 범위가 섞여 있어
+    // '정상/부족' 같은 판정투 대신 관찰투로 표시한다.
+    if (val < min) return { cls: 'low', text: '적은 편' };
+    if (val > max) return { cls: 'high', text: '많은 편' };
+    return { cls: 'ok', text: '범위 안 ✓' };
   };
 
   const feedStatus = getStatus(feedCount, feedNorm.min, feedNorm.maxN);
@@ -2256,11 +2355,11 @@ function renderFeedback() {
   // 인사이트 메시지 생성
   const insights = [];
   if (feedCount > 0 && feedStatus.cls !== 'ok') {
-    if (feedStatus.cls === 'low') insights.push(`🍼 수유 횟수가 조금 <strong>적어요</strong>. ${ageMonths}개월 기준 하루 ${feedNorm.min}~${feedNorm.maxN}회가 권장돼요.`);
+    if (feedStatus.cls === 'low') insights.push(`🍼 수유 횟수가 조금 <strong>적은 편</strong>이에요. ${ageMonths}개월 참고 범위는 하루 ${feedNorm.min}~${feedNorm.maxN}회예요.`);
     else insights.push(`🍼 수유가 <strong>많은 편</strong>이에요. 수유 간격을 조금 늘려보세요.`);
   }
   if (sleepHours > 0 && sleepStatus.cls !== 'ok') {
-    if (sleepStatus.cls === 'low') insights.push(`😴 수면이 <strong>부족해요</strong>. ${ageMonths}개월 기준 하루 ${sleepNorm.min}~${sleepNorm.maxN}시간이 필요해요.`);
+    if (sleepStatus.cls === 'low') insights.push(`😴 수면이 <strong>적은 편</strong>이에요. ${ageMonths}개월 참고 범위는 하루 ${sleepNorm.min}~${sleepNorm.maxN}시간이에요.`);
     else insights.push(`😴 오늘 수면이 <strong>아주 많네요</strong>. 컨디션이 좋지 않은지 확인해보세요.`);
   }
   if (lastTemp !== null) {
@@ -2272,7 +2371,7 @@ function renderFeedback() {
     insights.push(`💩 오늘 대변 기록이 없어요. 2~3일 이상 없으면 소아과에 문의해보세요.`);
   }
   if (ageMonths >= 5 && foodCount > 0) {
-    insights.push(`🥣 오늘 이유식 <strong>${foodCount}회</strong> 먹었어요${foodNames ? ' (' + foodNames + ')' : ''}. ${ageMonths}개월 기준 하루 ${foodNormMin}~${foodNormMax}회 권장이에요.`);
+    insights.push(`🥣 오늘 이유식 <strong>${foodCount}회</strong> 먹었어요${foodNames ? ' (' + foodNames + ')' : ''}. ${ageMonths}개월 참고 범위는 하루 ${foodNormMin}~${foodNormMax}회예요.`);
   }
   if (alertFood.length > 0) {
     insights.push(`⚠️ 알레르기 반응 음식: <strong>${alertFood.join(', ')}</strong> — 다시 시도 시 주의하세요.`);
@@ -2282,6 +2381,7 @@ function renderFeedback() {
     return;
   }
 
+  initSrcNotesLater();   // 이 박스는 매번 다시 그려지므로 상태를 다시 입힌다
   el.innerHTML = `
     <div class="feedback-card ${feedStatus.cls === 'ok' && sleepStatus.cls === 'ok' && diaperStatus.cls === 'ok' ? 'good' : 'warn'}">
       <div class="feedback-title">📋 오늘 ${ageMonths}개월 기준 분석</div>
@@ -2289,27 +2389,27 @@ function renderFeedback() {
         <div class="feedback-row">
           <span class="fb-label">🍼 수유</span>
           <span class="fb-value">${feedCount}회</span>
-          <span style="font-size:11px;color:var(--text-light);">권장 ${feedNorm.min}~${feedNorm.maxN}회</span>
+          <span style="font-size:11px;color:var(--text-light);">참고 ${feedNorm.min}~${feedNorm.maxN}회</span>
           <span class="fb-status ${feedStatus.cls}">${feedStatus.text}</span>
         </div>
         <div class="feedback-row">
           <span class="fb-label">😴 수면</span>
           <span class="fb-value">${sleepHours}시간</span>
-          <span style="font-size:11px;color:var(--text-light);">권장 ${sleepNorm.min}~${sleepNorm.maxN}h</span>
+          <span style="font-size:11px;color:var(--text-light);">참고 ${sleepNorm.min}~${sleepNorm.maxN}h</span>
           <span class="fb-status ${sleepStatus.cls}">${sleepStatus.text}</span>
         </div>
         <div class="feedback-row">
           <span class="fb-label">💧 기저귀</span>
           <span class="fb-value">${diaperCount}회</span>
-          <span style="font-size:11px;color:var(--text-light);">권장 ${diaperNorm.min}~${diaperNorm.maxN}회</span>
+          <span style="font-size:11px;color:var(--text-light);">참고 ${diaperNorm.min}~${diaperNorm.maxN}회</span>
           <span class="fb-status ${diaperStatus.cls}">${diaperStatus.text}</span>
         </div>
         ${ageMonths >= 5 ? `
         <div class="feedback-row">
           <span class="fb-label">🥣 이유식</span>
           <span class="fb-value">${foodCount}회</span>
-          <span style="font-size:11px;color:var(--text-light);">권장 ${foodNormMin}~${foodNormMax}회</span>
-          <span class="fb-status ${foodStatus ? foodStatus.cls : 'ok'}">${foodStatus ? foodStatus.text : '정상 ✓'}</span>
+          <span style="font-size:11px;color:var(--text-light);">참고 ${foodNormMin}~${foodNormMax}회</span>
+          <span class="fb-status ${foodStatus ? foodStatus.cls : 'ok'}">${foodStatus ? foodStatus.text : '범위 안 ✓'}</span>
         </div>` : ''}
         ${lastTemp ? `
         <div class="feedback-row">
@@ -2319,6 +2419,15 @@ function renderFeedback() {
           <span class="fb-status ${lastTemp >= 38 ? 'high' : lastTemp >= 37.5 ? 'low' : 'ok'}">${lastTemp >= 38 ? '발열!' : lastTemp >= 37.5 ? '미열' : '정상 ✓'}</span>
         </div>` : ''}
       </div>
+      <details data-src-key="home" class="src-note">
+        <summary>ⓘ<span class="src-label"> 이 참고 범위는 어디서 온 숫자인가요?</span></summary>
+        <div>
+          수유·수면·기저귀 범위는 국제 자료(미국수면재단 등)와 일반 소아과 자료를 참고한 값으로,
+          국내 의료기관의 공식 수치는 확인하지 못했습니다. 판정이 아니라 참고 범위입니다.<br>
+          마음에 걸리는 숫자가 있으면 이 화면을 소아청소년과에 보여주세요.<br>
+          성장 백분위는 WHO 성장기준으로, 국내 「2017 소아청소년 성장도표」와 같은 기준입니다.
+        </div>
+      </details>
     </div>
     ${insights.length > 0 ? `
     <div class="insight-box">

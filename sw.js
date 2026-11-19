@@ -1,4 +1,4 @@
-const CACHE_NAME = 'baby-diary-v3';
+const CACHE_NAME = 'baby-diary-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -12,10 +12,13 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
+// 주의: dustinkang60.github.io 의 앱들은 저장 공간(Cache Storage)을 함께 쓴다.
+// 자기 이름으로 시작하는 캐시만 지워야 한다 — 전부 지우면 다른 앱의 오프라인 저장분이 날아가
+// 그 앱이 해외·오프라인에서 아예 안 열린다.
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k.startsWith('baby-diary-') && k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
